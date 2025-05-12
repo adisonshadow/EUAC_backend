@@ -115,15 +115,48 @@
        - `bcryptSaltRounds`: bcrypt 加密轮数，默认为 10
    - **logging**: 日志配置
      - `level`: 日志级别，默认为 info
+       - 可选值: error, warn, info, verbose, debug, silly
+       - 生产环境建议使用 info 或 warn 级别
      - `format`: 日志格式，默认为 json
+       - 可选值: json, simple
+       - json格式适合ELK等日志系统收集
      - `file`: 日志文件路径，默认为 logs/app.log
+       - 日志文件将自动按日期和大小轮转
+       - 确保logs目录有写入权限
      - `rotation`: 日志轮转配置
        - `maxSize`: 单个日志文件最大大小，默认为 20m
+         - 支持单位: k/m/g (如 100k, 20m, 1g)
        - `maxFiles`: 普通日志保留天数，默认为 14d
+         - 支持单位: d (天) 或 h (小时)
        - `zippedArchive`: 是否压缩旧日志，默认为 true
+         - 压缩可节省磁盘空间
        - `errorMaxFiles`: 错误日志保留天数，默认为 30d
        - `exceptionsMaxFiles`: 异常日志保留天数，默认为 30d
        - `rejectionsMaxFiles`: Promise拒绝日志保留天数，默认为 30d
+
+### 日志使用说明
+维护日志将保存在 `logs` 目录下，文件名格式为 `db-maintenance-YYYYMMDD_HHMMSS.log`。  
+如遇权限问题，脚本会输出警告信息，请检查数据库用户权限。
+
+1. **日志级别调整**
+   - 开发环境可设置为debug或verbose级别查看详细日志
+   - 生产环境建议使用info或warn级别
+   - 临时调整日志级别(无需重启服务):
+     ```bash
+     curl -X PATCH http://localhost:3000/api/v1/config \
+       -H "Content-Type: application/json" \
+       -d '{"logging":{"level":"debug"}}'
+     ```
+
+2. **日志文件位置**
+   - 默认日志路径: ./logs/app.log
+   - 错误日志: ./logs/app-error.log
+   - 异常日志: ./logs/app-exceptions.log
+
+3. **常见问题**
+   - **日志不生成**: 检查logs目录权限(需755以上)
+   - **日志文件过大**: 调整maxSize参数(如50m)
+   - **日志保留时间**: 根据磁盘空间调整maxFiles参数
 
 2. 启动
 ```bash
@@ -175,6 +208,14 @@ yarn jest test/user.test.js
 yarn jest test/permission.test.js
 ```
 
+#### 测试覆盖检查
+```bash
+# 检查测试覆盖率，生成后会自动创建coverage目录
+yarn test --coverage
+```
+进入coverage目录，打开lcov-report/index.html文件，查看测试覆盖率。
+命令行查看： cat coverage/lcov.info
+
 ### 数据库表维护操作
 数据库表维护操作包括 VACUUM、ANALYZE 和 REINDEX，用于清理死元组、更新统计信息以及重建索引，确保数据库性能。  
 可通过以下命令执行维护操作：
@@ -192,7 +233,4 @@ yarn db:analyze
 # 单独执行 REINDEX 操作
 yarn db:reindex
 ```
-
-维护日志将保存在 `logs` 目录下，文件名格式为 `db-maintenance-YYYYMMDD_HHMMSS.log`。  
-如遇权限问题，脚本会输出警告信息，请检查数据库用户权限。
 

@@ -35,12 +35,12 @@
     "format": "json",
     "file": "logs/app.log",
     "rotation": {
-      "maxSize": "1k",
-      "maxFiles": "30s",
+      "maxSize": "20m",
+      "maxFiles": "14d",
       "zippedArchive": true,
-      "errorMaxFiles": "30s",
-      "exceptionsMaxFiles": "30s",
-      "rejectionsMaxFiles": "30s"
+      "errorMaxFiles": "30d",
+      "exceptionsMaxFiles": "30d",
+      "rejectionsMaxFiles": "30d"
     }
   }
 }

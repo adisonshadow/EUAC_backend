@@ -22,7 +22,7 @@ describe('日志轮转测试', () => {
         new winston.transports.DailyRotateFile({
           filename: path.join(logDir, 'app-%DATE%.log'),
           datePattern: 'YYYY-MM-DD-HH-mm-ss',
-          maxSize: '500b', // 降低大小限制以更快触发轮转
+          maxSize: '1k', // 修改为1kb大小限制
           maxFiles: config.logging.rotation.maxFiles,
           zippedArchive: config.logging.rotation.zippedArchive,
           createSymlink: true,
@@ -66,14 +66,26 @@ describe('日志轮转测试', () => {
     expect(gzFiles.length).toBeGreaterThan(0);
   }, 10000); // 增加超时时间到10秒
 
-  test('日志文件大小不应超过500字节', async () => {
+  test('日志文件大小不应超过1kb', async () => {
+    // 清空日志目录
+    if (fs.existsSync(logDir)) {
+      fs.rmSync(logDir, { recursive: true, force: true });
+      fs.mkdirSync(logDir, { recursive: true });
+    }
+    
+    // 循环写入测试日志
+    for (let i = 0; i < 10; i++) {
+      logger.info(`测试日志 ${i}: ${'x'.repeat(100)}`);
+      await new Promise(resolve => setTimeout(resolve, 3000));
+    }
+    
     const files = fs.readdirSync(logDir);
     const logFiles = files.filter(file => file.startsWith('app-') && file.endsWith('.log'));
     
     for (const file of logFiles) {
       const stats = fs.statSync(path.join(logDir, file));
       console.log(`文件 ${file} 大小: ${stats.size} 字节`);
-      expect(stats.size).toBeLessThanOrEqual(500);
+      expect(stats.size).toBeLessThanOrEqual(1024);
     }
   }, 10000); // 增加超时时间到10秒
-}); 
+});

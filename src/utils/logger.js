@@ -18,7 +18,7 @@ const logFormat = winston.format.combine(
 
 // 创建 logger 实例
 const logger = winston.createLogger({
-    level: config.logging.level,
+    level: process.env.NODE_ENV === 'development' ? 'silly' : config.logging.level,
     format: logFormat,
     transports: [
         // 文件日志，使用日志轮转
@@ -75,4 +75,4 @@ logger.rejections.handle(
     })
 );
 
-module.exports = logger; 
+module.exports = logger;
