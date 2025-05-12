@@ -17,6 +17,7 @@ async function initDatabase(options = {}) {
     // 删除现有表
     await pool.query(`
       DROP SCHEMA IF EXISTS uac CASCADE;
+      CREATE SCHEMA uac;
     `);
 
     if (!resetOnly) {
@@ -24,16 +25,21 @@ async function initDatabase(options = {}) {
       const sqlFile = path.join(__dirname, '../../Documents/UAC_Schema.sql');
       const sql = fs.readFileSync(sqlFile, 'utf8');
 
-      // 分割SQL语句
+      // 分割SQL语句并按顺序执行
       const statements = sql
         .split(';')
         .map(statement => statement.trim())
         .filter(statement => statement.length > 0);
 
-      // 逐个执行SQL语句
+      // 按顺序执行SQL语句
       for (const statement of statements) {
         try {
+          // 跳过注释
+          if (statement.startsWith('--')) continue;
+          
+          // 执行SQL语句
           await pool.query(statement + ';');
+          console.log('执行SQL语句成功:', statement.substring(0, 50) + '...');
         } catch (error) {
           console.error('执行SQL语句失败:', error);
           console.error('失败的SQL语句:', statement);
@@ -65,12 +71,15 @@ async function initDatabase(options = {}) {
   }
 }
 
-// 如果直接运行此文件
+// 如果直接运行此文件，则执行初始化
 if (require.main === module) {
   initDatabase()
-    .then(() => process.exit(0))
-    .catch((error) => {
-      console.error(error);
+    .then(() => {
+      console.log('数据库初始化完成');
+      process.exit(0);
+    })
+    .catch(error => {
+      console.error('数据库初始化失败:', error);
       process.exit(1);
     });
 }

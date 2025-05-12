@@ -37,27 +37,58 @@ class UserController {
       logger.debug('Creating user', { body: ctx.request.body });
 
       // 参数验证
-      if (!ctx.request.body.username || !ctx.request.body.password) {
-        throw new CustomValidationError('用户名和密码不能为空');
+      if (!ctx.request.body.username) {
+        ctx.status = 200;
+        ctx.body = {
+          code: 400,
+          message: '用户名不能为空',
+          data: null
+        };
+        return;
+      }
+      if (!ctx.request.body.password) {
+        ctx.status = 200;
+        ctx.body = {
+          code: 400,
+          message: '密码不能为空',
+          data: null
+        };
+        return;
+      }
+      if (!ctx.request.body.department_id) {
+        ctx.status = 200;
+        ctx.body = {
+          code: 400,
+          message: '部门不能为空',
+          data: null
+        };
+        return;
       }
 
       const salt = await bcrypt.genSalt(10);
       const hashedPassword = await bcrypt.hash(ctx.request.body.password, salt);
-      
       const user = await User.create({
         username: ctx.request.body.username,
         password_hash: hashedPassword,
-        department_id: ctx.request.body.department_id
+        email: ctx.request.body.email,
+        phone: ctx.request.body.phone,
+        department_id: ctx.request.body.department_id,
+        status: 'ACTIVE'
       });
 
       logger.debug('User created successfully', { user_id: user.user_id });
 
+      ctx.status = 200;
       ctx.body = {
         code: 200,
         message: 'success',
         data: {
           user_id: user.user_id,
           username: user.username,
+          email: user.email,
+          phone: user.phone,
+          status: user.status,
+          department_id: user.department_id,
           created_at: user.createdAt
         }
       };
@@ -69,10 +100,21 @@ class UserController {
       });
 
       if (error instanceof UniqueConstraintError) {
-        throw new CustomValidationError('用户名已存在');
+        ctx.status = 200;
+        ctx.body = {
+          code: 400,
+          message: '用户名已存在',
+          data: null
+        };
+        return;
       }
 
-      throw error;
+      ctx.status = 200;
+      ctx.body = {
+        code: 500,
+        message: error.message,
+        data: null
+      };
     }
   }
 

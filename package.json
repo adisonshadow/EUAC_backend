@@ -9,9 +9,7 @@
     "test": "jest",
     "test-with-reset-db": "cross-env RESET_DB=true jest --config=jest.config.js",
     "init-db": "./scripts/initdb.sh",
-    "init-db-with-mock": "./scripts/initdb.sh --with-mock",
-    "init-db-with-reset": "./scripts/initdb.sh --with-reset",
-    "init-db-with-reset-with-mock": "./scripts/initdb.sh --with-reset--with-mock"
+    "init-db-with-mock": "./scripts/initdb.sh --with-mock"
   },
   "dependencies": {
     "@koa/cors": "^5.0.0",

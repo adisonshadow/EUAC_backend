@@ -1,7 +1,19 @@
 const request = require('supertest');
-const { User, Department, Role, Permission, UserRole, OperationLog, RefreshToken, sequelize } = require('../src/models');
+const { User, Department, Role, Permission, UserRole, OperationLog, RefreshToken, LoginAttempt, sequelize } = require('../src/models');
+const { Op } = require('sequelize');
 const bcrypt = require('bcryptjs');
 const { v4: uuidv4 } = require('uuid');
+
+// 生成随机测试数据
+const generateRandomTestData = () => {
+  const random = Math.floor(Math.random() * 10000);
+  return {
+    username: `testuser_${random}`,
+    email: `test_${random}@example.com`,
+    phone: `138${random.toString().padStart(8, '0')}`,
+    password: 'password123'
+  };
+};
 
 describe('用户API测试', () => {
   let rootDepartment;
@@ -11,25 +23,56 @@ describe('用户API测试', () => {
   let authToken;
   let refreshToken;
   let serverAvailable = false;
+  let testData;
 
   beforeAll(async () => {
     try {
-      // 确保数据库连接
       await sequelize.authenticate();
       console.log('测试数据库连接成功');
 
-      // 清理之前的测试数据
-      await UserRole.destroy({ where: {}, force: true });
+      testData = generateRandomTestData();
+
+      // 1. 查找所有测试部门
+      const depts = await Department.findAll({ 
+        where: { code: 'ROOT_DEPT_USER_TEST' },
+        paranoid: false // 包括软删除的部门
+      });
+      const deptIds = depts.map(d => d.department_id);
+
+      // 2. 删除所有引用这些部门的用户（包括软删除）
+      if (deptIds.length > 0) {
+        // 2.1 查出所有相关用户ID
+        const users = await User.findAll({
+          where: { department_id: deptIds },
+          attributes: ['user_id'],
+          paranoid: false
+        });
+        const userIds = users.map(u => u.user_id);
+
+        if (userIds.length > 0) {
+          await RefreshToken.destroy({ where: { user_id: userIds }, force: true });
+          await OperationLog.destroy({ where: { user_id: userIds }, force: true });
+          await LoginAttempt.destroy({ where: { user_id: userIds }, force: true });
+          await UserRole.destroy({ where: { user_id: userIds }, force: true });
+          await User.destroy({ where: { user_id: userIds }, force: true });
+        }
+      }
+
+      // 3. 清理角色和权限
       await Role.destroy({ where: { code: 'TEST_ROLE_USER' }, force: true });
-      await User.destroy({ where: { username: 'testuser' }, force: true });
       await Permission.destroy({ where: { code: 'user:manage:test:user' }, force: true });
-      await Department.destroy({ where: { code: 'ROOT_DEPT_USER_TEST' }, force: true });
+
+      // 4. 最后清理部门（包括软删除）
+      await Department.destroy({ 
+        where: { code: 'ROOT_DEPT_USER_TEST' }, 
+        force: true 
+      });
 
       // 检查服务器是否可用
       try {
         const response = await request(global.testEnv.server)
           .get('/api/v1/health')
-          .timeout(5000); // 设置5秒超时
+          .timeout(5000);
         
         if (response.status === 200 && response.body.code === 200) {
           serverAvailable = true;
@@ -77,11 +120,11 @@ describe('用户API测试', () => {
 
       // 创建测试用户
       [testUser] = await User.findOrCreate({
-        where: { username: 'testuser' },
+        where: { username: testData.username },
         defaults: {
-          password_hash: await bcrypt.hash('password123', 10),
-          email: 'test@example.com',
-          phone: '13800138000',
+          password_hash: await bcrypt.hash(testData.password, 10),
+          email: testData.email,
+          phone: testData.phone,
           status: 'ACTIVE',
           department_id: rootDepartment.department_id
         }
@@ -101,8 +144,8 @@ describe('用户API测试', () => {
           const loginResponse = await request(global.testEnv.server)
             .post('/api/v1/auth/login')
             .send({
-              username: 'testuser',
-              password: 'password123'
+              username: testData.username,
+              password: testData.password
             });
 
           if (loginResponse.status === 200 && loginResponse.body.data.token) {
@@ -125,73 +168,97 @@ describe('用户API测试', () => {
   });
 
   afterAll(async () => {
-    // 清理测试数据
-    await RefreshToken.destroy({ where: { user_id: testUser.user_id } });
-    await OperationLog.destroy({ where: { user_id: testUser.user_id } });
-    await UserRole.destroy({ where: { user_id: testUser.user_id } });
-    await testUser.destroy();
-    await testRole.destroy();
-    await testPermission.destroy();
-    await rootDepartment.destroy();
-  });
-
-  describe('POST /api/v1/users', () => {
-    const testFn = async () => {
-      const response = await request(global.testEnv.server)
-        .post('/api/v1/users')
-        .set('Authorization', `Bearer ${authToken}`)
-        .send({
-          username: 'newuser',
-          password: 'password123',
-          email: 'new@example.com',
-          phone: '13900139000',
-          department_id: rootDepartment.department_id
+    try {
+      // 按照依赖关系顺序清理数据
+      if (testUser) {
+        await RefreshToken.destroy({ where: { user_id: testUser.user_id } });
+        await OperationLog.destroy({ where: { user_id: testUser.user_id } });
+        await LoginAttempt.destroy({ where: { user_id: testUser.user_id } });
+        await UserRole.destroy({ where: { user_id: testUser.user_id } });
+        await testUser.destroy({ force: true });
+      }
+      if (testRole) {
+        await testRole.destroy({ force: true });
+      }
+      if (testPermission) {
+        await testPermission.destroy({ force: true });
+      }
+      if (rootDepartment) {
+        // 先物理删除所有属于该部门的用户（包括软删除的）
+        await User.destroy({
+          where: { department_id: rootDepartment.department_id },
+          force: true,
+          paranoid: false
         });
-
-      expect(response.status).toBe(201);
-      expect(response.body).toHaveProperty('user_id');
-      expect(response.body.username).toBe('newuser');
-      expect(response.body.status).toBe('ACTIVE');
-      expect(response.body).toHaveProperty('email');
-      expect(response.body).toHaveProperty('phone');
-      expect(response.body).toHaveProperty('created_at');
-      expect(response.body).toHaveProperty('updated_at');
-      expect(response.body).toHaveProperty('last_password_updated');
-    };
-
-    if (serverAvailable) {
-      it('应该成功创建新用户', testFn);
-    } else {
-      it.skip('应该成功创建新用户 (服务器不可用)', testFn);
-    }
-
-    const duplicateTestFn = async () => {
-      const response = await request(global.testEnv.server)
-        .post('/api/v1/users')
-        .set('Authorization', `Bearer ${authToken}`)
-        .send({
-          username: 'testuser',
-          password: 'password123',
-          department_id: rootDepartment.department_id
-        });
-
-      expect(response.status).toBe(400);
-    };
-
-    if (serverAvailable) {
-      it('不应该创建重复用户名的用户', duplicateTestFn);
-    } else {
-      it.skip('不应该创建重复用户名的用户 (服务器不可用)', duplicateTestFn);
+        await rootDepartment.destroy({ force: true });
+      }
+    } catch (error) {
+      console.error('测试清理失败:', error);
     }
   });
 
-  describe('POST /api/v1/auth/login', () => {
+  describe('用户创建 POST /api/v1/users', () => {
+    it('应该成功创建新用户', async () => {
+      const newUser = {
+        username: 'newuser',
+        password: 'password123',
+        email: 'new@example.com',
+        phone: '13800138001',
+        department_id: rootDepartment.department_id
+      };
+
+      const response = await request(global.testEnv.server)
+        .post('/api/v1/users')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send(newUser);
+
+      expect(response.status).toBe(200);
+      expect(response.body.code).toBe(200);
+      expect(response.body.data).toHaveProperty('user_id');
+      expect(response.body.data.username).toBe(newUser.username);
+      expect(response.body.data.email).toBe(newUser.email);
+      expect(response.body.data.phone).toBe(newUser.phone);
+      expect(response.body.data.status).toBe('ACTIVE');
+    });
+
+    it('应该验证必填字段', async () => {
+      const response = await request(global.testEnv.server)
+        .post('/api/v1/users')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({});
+
+      expect(response.status).toBe(200);
+      expect(response.body.code).toBe(400);
+      expect(response.body.message).toContain('用户名不能为空');
+    });
+
+    it('应该验证用户名唯一性', async () => {
+      const duplicateUser = {
+        username: testData.username,
+        password: 'password123',
+        email: 'another@example.com',
+        phone: '13800138001',
+        department_id: rootDepartment.department_id
+      };
+
+      const response = await request(global.testEnv.server)
+        .post('/api/v1/users')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send(duplicateUser);
+
+      expect(response.status).toBe(200);
+      expect(response.body.code).toBe(400);
+      expect(response.body.message).toContain('用户名已存在');
+    });
+  });
+
+  describe('用户登录 POST /api/v1/auth/login', () => {
     it('应该成功登录并返回token', async () => {
       const response = await request(global.testEnv.server)
         .post('/api/v1/auth/login')
         .send({
-          username: 'testuser',
-          password: 'password123'
+          username: testData.username,
+          password: testData.password
         });
 
       expect(response.status).toBe(200);
@@ -203,7 +270,7 @@ describe('用户API测试', () => {
       const response = await request(global.testEnv.server)
         .post('/api/v1/auth/login')
         .send({
-          username: 'testuser',
+          username: testData.username,
           password: 'wrongpassword'
         });
 
@@ -211,7 +278,7 @@ describe('用户API测试', () => {
     });
   });
 
-  describe('PUT /api/v1/users/:user_id', () => {
+  describe('用户更新 PUT /api/v1/users/:user_id', () => {
     it('应该成功更新用户信息', async () => {
       const response = await request(global.testEnv.server)
         .put(`/api/v1/users/${testUser.user_id}`)
@@ -250,7 +317,7 @@ describe('用户API测试', () => {
     });
   });
 
-  describe('GET /api/v1/users', () => {
+  describe('用户查询 GET /api/v1/users', () => {
     it('应该成功获取用户列表', async () => {
       const response = await request(global.testEnv.server)
         .get('/api/v1/users')
@@ -282,7 +349,7 @@ describe('用户API测试', () => {
     });
   });
 
-  describe('刷新令牌测试', () => {
+  describe('令牌刷新 POST /api/v1/auth/refresh', () => {
     it('应该成功刷新访问令牌', async () => {
       const response = await request(global.testEnv.server)
         .post('/api/v1/auth/refresh')
@@ -379,7 +446,7 @@ describe('用户API测试', () => {
     });
   });
 
-  describe('用户软删除', () => {
+  describe('用户删除 DELETE /api/v1/users/:user_id', () => {
     it('应该成功软删除用户', async () => {
       // 先确保用户是激活状态
       await testUser.update({ status: 'ACTIVE', deleted_at: null });

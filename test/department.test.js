@@ -14,13 +14,35 @@ describe('部门管理 API 测试', () => {
         throw new Error('测试环境未正确初始化');
       }
 
-      // 先清理子部门，再清理根部门
+      // 先清空 login_attempts 表，避免外键约束错误
+      const { User, OperationLog, LoginAttempt } = require('../src/models');
+      await LoginAttempt.destroy({ where: {}, force: true });
+      // 再清空 operation_logs 表
+      await OperationLog.destroy({ where: {}, force: true });
+      // 再清空用户表
+      await User.destroy({ where: {}, force: true });
+
+      // 先清理 department_closure 表中的记录
+      await DepartmentClosure.destroy({
+        where: {},
+        force: true
+      });
+
+      // 再清理 department_history 表中的记录
+      await DepartmentHistory.destroy({
+        where: {},
+        force: true
+      });
+
+      // 再清理子部门
       await Department.destroy({ 
         where: { 
           parent_id: { [Op.ne]: null } 
         },
         force: true 
       });
+
+      // 最后清理根部门
       await Department.destroy({ 
         where: { 
           code: 'ROOT_DEPT_TEST' 
@@ -127,7 +149,7 @@ describe('部门管理 API 测试', () => {
     }
   });
 
-  describe('创建部门', () => {
+  describe('部门创建 POST /api/v1/departments', () => {
     it('应该成功创建新部门', async () => {
       const { server, authToken } = global.testEnv;
       const response = await request(server)
@@ -167,7 +189,7 @@ describe('部门管理 API 测试', () => {
     });
   });
 
-  describe('获取部门列表', () => {
+  describe('部门查询 GET /api/v1/departments', () => {
     it('应该返回部门列表', async () => {
       const { server, authToken } = global.testEnv;
       const response = await request(server)
@@ -197,7 +219,7 @@ describe('部门管理 API 测试', () => {
     });
   });
 
-  describe('获取部门详情', () => {
+  describe('部门详情 GET /api/v1/departments/:department_id', () => {
     it('应该返回指定部门的详细信息', async () => {
       const { server, authToken } = global.testEnv;
       const response = await request(server)
@@ -220,7 +242,7 @@ describe('部门管理 API 测试', () => {
     });
   });
 
-  describe('更新部门', () => {
+  describe('部门更新 PUT /api/v1/departments/:department_id', () => {
     it('应该成功更新部门信息并记录历史', async () => {
       const { server, authToken } = global.testEnv;
       const response = await request(server)
@@ -261,7 +283,7 @@ describe('部门管理 API 测试', () => {
     });
   });
 
-  describe('删除部门', () => {
+  describe('部门删除 DELETE /api/v1/departments/:department_id', () => {
     it('应该成功删除部门', async () => {
       const { server, authToken } = global.testEnv;
       const response = await request(server)
@@ -293,7 +315,7 @@ describe('部门管理 API 测试', () => {
     });
   });
 
-  describe('获取部门树', () => {
+  describe('部门树结构 GET /api/v1/departments/tree', () => {
     it('应该返回部门树结构', async () => {
       const { server, authToken } = global.testEnv;
       const response = await request(server)

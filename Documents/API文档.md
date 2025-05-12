@@ -196,19 +196,23 @@
 }
 ```
 
-### 2. 分配角色
-- **接口**: POST `/roles/assign`
-- **描述**: 为用户分配角色
+### 2. 分配角色权限
+- **接口**: POST `/roles/:role_id/permissions`
+- **描述**: 为指定角色分配权限
 - **请求体**:
 ```json
 {
-    "user_id": "uuid",
-    "role_ids": ["integer"]
+    "permission_ids": ["uuid"]
 }
 ```
 - **响应**: 返回分配结果
 
-### 3. 检查权限
+### 3. 移除角色权限
+- **接口**: DELETE `/roles/:role_id/permissions/:permission_id`
+- **描述**: 移除指定角色的指定权限
+- **响应**: 返回移除结果
+
+### 4. 检查权限
 - **接口**: POST `/permissions/check`
 - **描述**: 检查用户是否有指定权限
 - **请求体**:
@@ -268,7 +272,7 @@
 - **请求体**:
 ```json
 {
-    "role_id": "integer",
+    "role_id": "uuid",
     "resource_type": "string",
     "conditions": {
         "field": "string",

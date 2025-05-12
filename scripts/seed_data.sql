@@ -29,11 +29,11 @@ dept_level2 AS (
   RETURNING department_id
 ),
 role_data AS (
-  INSERT INTO uac.roles (role_name, description)
+  INSERT INTO uac.roles (role_name, code, description)
   VALUES 
-    ('系统管理员', '系统最高权限管理员'),
-    ('部门主管', '部门负责人'),
-    ('普通员工', '普通用户')
+    ('系统管理员', 'ADMIN', '系统最高权限管理员'),
+    ('部门主管', 'MANAGER', '部门负责人'),
+    ('普通员工', 'STAFF', '普通用户')
   RETURNING role_id
 ),
 perm_data AS (

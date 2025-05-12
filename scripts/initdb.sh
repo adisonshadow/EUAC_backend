@@ -39,15 +39,12 @@ execute_sql_file() {
 main() {
   check_db_connection
   
-  # 如果指定了--with-reset，先清空数据库
-  if [ "${1:-}" = "--with-reset" ] || [ "${2:-}" = "--with-reset" ]; then
-    echo "开始清空数据库表..."
-    PGPASSWORD="$DB_PASS" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -c "
-      DROP SCHEMA IF EXISTS uac CASCADE;
-      CREATE SCHEMA uac;
-    "
-    echo "数据库表清空完成"
-  fi
+  echo "开始重置数据库表..."
+  PGPASSWORD="$DB_PASS" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -c "
+    DROP SCHEMA IF EXISTS uac CASCADE;
+    CREATE SCHEMA uac;
+  "
+  echo "数据库重置完成"
 
   echo "开始创建数据库结构..."
   # 执行schema创建

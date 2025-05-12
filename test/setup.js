@@ -84,7 +84,7 @@ async function globalSetup() {
         password_hash: await bcrypt.hash(password, 10),
         email: 'dept@example.com',
         phone: '13800138001',
-        department_id: 1,
+        department_id: null,
         status: 'ACTIVE'
       }
     });

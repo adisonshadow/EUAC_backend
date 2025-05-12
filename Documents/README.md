@@ -84,16 +84,28 @@
 24.[用户管理项目怎么做的 - Worktile](https://worktile.com/kb/p/3799435)
 
 ## 安装
+1、 修改配置文件 ./config.json
+```bash
+# 启动服务
+npm run dev
+```
 
 ## 开发
 ### 部署
 ```bash
+# 启动服务
 npm run dev
 ```
 
 ### 调试
 
 ```bash
+# IMPORTANT: 初始化数据结构， 注意这一步会清空已有数据，如有数据则需跳过
+npm run init-db-with-mock
+
+# 检查API服务健康状态
+curl -s http://localhost:3000/api/v1/health
+
 # login
 curl -v -X POST http://localhost:3000/api/v1/auth/login -H "Content-Type: application/json" -d '{"username":"dept_admin","password":"password123"}'
 
@@ -101,8 +113,22 @@ curl -v -X POST http://localhost:3000/api/v1/auth/login -H "Content-Type: applic
 
 
 ### 测试
-```bash
+#### 注意：
+1、如果服务器没有启动、数据库没有连接成功，会给出信息，需手工操作；
+2、如果jest遇到缺少表、字段等错误，只给吃错误信息；
+3、jest时不会初始化数据库，当会做一些添加和清除测试数据的操作；
+4、yarn jest运行时不需要运行 init-db.test.js，需要时需手工单独启动。
 
+#### 常见测试命令：
+```bash
+# 部门/组织
+yarn jest test/department.test.js
+
+# 用户
+yarn jest test/user.test.js
+
+# 权限
+yarn jest test/permission.test.js
 
 ```
 

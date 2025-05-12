@@ -1,6 +1,7 @@
 const { Department } = require('../models');
 const User = require('../models/user');
 const { Op } = require('sequelize');
+const { validate: isUuid } = require('uuid');
 
 class DepartmentController {
   // 创建部门
@@ -89,6 +90,18 @@ class DepartmentController {
   static async getById(ctx) {
     try {
       const { department_id } = ctx.params;
+
+      // 新增：UUID 校验
+      if (!isUuid(department_id)) {
+        ctx.status = 404;
+        ctx.body = {
+          code: 404,
+          message: '部门不存在',
+          data: null
+        };
+        return;
+      }
+
       const department = await Department.findByPk(department_id);
 
       if (!department) {

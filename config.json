@@ -25,7 +25,7 @@
       "max": 100
     },
     "security": {
-      "jwtSecret": "your-jwt-secret-key",
+      "jwtSecret": "my-jwt-secret-key",
       "jwtExpiresIn": "24h",
       "bcryptSaltRounds": 10
     }
