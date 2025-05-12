@@ -33,6 +33,14 @@
   "logging": {
     "level": "info",
     "format": "json",
-    "file": "logs/app.log"
+    "file": "logs/app.log",
+    "rotation": {
+      "maxSize": "1k",
+      "maxFiles": "30s",
+      "zippedArchive": true,
+      "errorMaxFiles": "30s",
+      "exceptionsMaxFiles": "30s",
+      "rejectionsMaxFiles": "30s"
+    }
   }
 }

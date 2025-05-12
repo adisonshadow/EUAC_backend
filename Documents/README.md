@@ -2,7 +2,7 @@
 ### 关于 UAC
 
 **企业级身份与权限管理解决方案**  
-为您的组织提供安全可控的用户管理体系与智能权限中枢，保障业务数据安全的同时，显著提升管理效率。
+为企业/组织提供安全可控的用户管理体系与智能权限中枢，保障业务数据安全的同时，显著提升管理效率。
 
 ---
 
@@ -66,12 +66,12 @@
 6.[业务系统通用功能包括:企业高效运营的六大核心要素 - 伙伴云](https://www.huoban.com/yx-jiaocheng/PEQnWww6dwX1xbZq.html)
 7.[企业权限管理项目有哪些 - Worktile](https://worktile.com/kb/p/3397955)
 8.[权限控制入门教程:轻松掌握用户权限管理 - 慕课网](https://www.imooc.com/article/374890)
-9.[记者实测 | 智能体按下“加速键” 大厂争当MCP“应用商店” - 东方财富网](https://finance.eastmoney.com/a/202504303394902161.html)
+9.[记者实测 | 智能体按下"加速键" 大厂争当MCP"应用商店" - 东方财富网](https://finance.eastmoney.com/a/202504303394902161.html)
 10.[用友erp软件的系统管理功能 - 简道云官网](https://www.jiandaoyun.com/blog/article/1010651/)
 11.[erp 安全组用户管理功能有哪些 ERP安全组用户管理核心功能解析 - 简道云官网](https://www.jiandaoyun.com/blog/article/1848945/)
 12.[客户权限如何管理 - Worktile](https://worktile.com/kb/p/3725634)
 13.[项目中的用户管理包括哪些 - PingCode](https://docs.pingcode.com/ask/ask-ask/439612.html)
-14.[后台管理有哪些项目 - 「基石协作」织信Informat官网](https://www.informat.cn/qa/224037)
+14.[后台管理有哪些项目 - "基石协作"织信Informat官网](https://www.informat.cn/qa/224037)
 15.[028.[转] 认证、授权、鉴权和权限控制 - 博客园](https://www.cnblogs.com/badboyh2o/p/11068779.html)
 16.[生活服务类平台产品研发-账户系统(三户) - 博客园](https://www.cnblogs.com/winyh/p/11355845.html)
 17.[后台管理有哪些项目 - PingCode](https://docs.pingcode.com/ask/ask-ask/405011.html)
@@ -84,7 +84,48 @@
 24.[用户管理项目怎么做的 - Worktile](https://worktile.com/kb/p/3799435)
 
 ## 安装
-1、 修改配置文件 ./config.json
+1. 修改配置文件 ./config.json
+
+   配置文件包含以下主要配置项：
+   - **postgresql**: 数据库连接配置
+     - `host`: 数据库主机地址，默认为 localhost
+     - `port`: 数据库端口，默认为 15432
+     - `database`: 数据库名称，默认为 UAC
+     - `user`: 数据库用户名，默认为 yoyo
+     - `password`: 数据库密码，默认为 123456
+     - `max_connections`: 最大连接数，默认为 20
+     - `idle_timeout`: 空闲连接超时时间（毫秒），默认为 30000
+     - `connection_timeout`: 连接超时时间（毫秒），默认为 2000
+     - `ssl`: 是否启用 SSL 连接，默认为 false
+   - **api**: API 服务配置
+     - `port`: API 服务端口，默认为 3000
+     - `host`: API 服务主机地址，默认为 localhost
+     - `cors`: 跨域配置
+       - `origin`: 允许的源地址，默认为 ["http://localhost:3000", "http://localhost:8080"]
+       - `methods`: 允许的 HTTP 方法，默认为 ["GET", "POST", "PUT", "DELETE", "PATCH"]
+       - `allowedHeaders`: 允许的请求头，默认为 ["Content-Type", "Authorization"]
+       - `credentials`: 是否允许携带凭证，默认为 true
+       - `maxAge`: 预检请求缓存时间（秒），默认为 86400
+     - `rateLimit`: 请求限流配置
+       - `windowMs`: 时间窗口（毫秒），默认为 900000
+       - `max`: 最大请求数，默认为 100
+     - `security`: 安全配置
+       - `jwtSecret`: JWT 密钥，默认为 my-jwt-secret-key
+       - `jwtExpiresIn`: JWT 过期时间，默认为 24h
+       - `bcryptSaltRounds`: bcrypt 加密轮数，默认为 10
+   - **logging**: 日志配置
+     - `level`: 日志级别，默认为 info
+     - `format`: 日志格式，默认为 json
+     - `file`: 日志文件路径，默认为 logs/app.log
+     - `rotation`: 日志轮转配置
+       - `maxSize`: 单个日志文件最大大小，默认为 20m
+       - `maxFiles`: 普通日志保留天数，默认为 14d
+       - `zippedArchive`: 是否压缩旧日志，默认为 true
+       - `errorMaxFiles`: 错误日志保留天数，默认为 30d
+       - `exceptionsMaxFiles`: 异常日志保留天数，默认为 30d
+       - `rejectionsMaxFiles`: Promise拒绝日志保留天数，默认为 30d
+
+2. 启动
 ```bash
 # 启动服务
 npm run dev
@@ -121,6 +162,9 @@ curl -v -X POST http://localhost:3000/api/v1/auth/login -H "Content-Type: applic
 
 #### 常见测试命令：
 ```bash
+# 数据库
+yarn jest test/db.test.js
+
 # 部门/组织
 yarn jest test/department.test.js
 
@@ -129,6 +173,26 @@ yarn jest test/user.test.js
 
 # 权限
 yarn jest test/permission.test.js
-
 ```
+
+### 数据库表维护操作
+数据库表维护操作包括 VACUUM、ANALYZE 和 REINDEX，用于清理死元组、更新统计信息以及重建索引，确保数据库性能。  
+可通过以下命令执行维护操作：
+
+```bash
+# 执行所有维护操作（VACUUM、ANALYZE、REINDEX）
+yarn db:maintenance:all
+
+# 单独执行 VACUUM 操作
+yarn db:vacuum
+
+# 单独执行 ANALYZE 操作
+yarn db:analyze
+
+# 单独执行 REINDEX 操作
+yarn db:reindex
+```
+
+维护日志将保存在 `logs` 目录下，文件名格式为 `db-maintenance-YYYYMMDD_HHMMSS.log`。  
+如遇权限问题，脚本会输出警告信息，请检查数据库用户权限。
 
