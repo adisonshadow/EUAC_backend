@@ -4,6 +4,7 @@ const { UniqueConstraintError, Op } = require('sequelize');
 const config = require('../config');
 const logger = require('../utils/logger');
 const { User, LoginAttempt, OperationLog, RefreshToken, Department, Role } = require('../models');
+const { sequelize } = require('../models');
 
 // 自定义错误类
 class CustomValidationError extends Error {
@@ -280,6 +281,16 @@ class UserController {
 
     try {
       logger.debug('User login attempt', { username });
+      logger.debug('Received password', { password });
+      
+      console.log('username', username);
+      console.log('password', password);
+      console.log('Database config:', {
+        host: sequelize.config.host,
+        port: sequelize.config.port,
+        database: sequelize.config.database,
+        username: sequelize.config.username
+      });
       
       if (!username || !password) {
         const error = new CustomValidationError('用户名和密码不能为空');
@@ -289,13 +300,19 @@ class UserController {
 
       const user = await User.findOne({
         where: { username },
-        attributes: ['user_id', 'username', 'password_hash', 'status']
+        attributes: ['user_id', 'username', 'password_hash', 'status', 'deleted_at'],
+        paranoid: false  // 包括已删除的记录
       });
+
+      console.log('user:', user);
+      console.log('SQL Query:', User.findOne.toString());
 
       logger.debug('User found', user ? { 
         user_id: user.user_id, 
         username: user.username,
-        status: user.status
+        status: user.status,
+        password_hash: user.password_hash,
+        deleted_at: user.deleted_at
       } : null);
 
       // 检查登录限制（如果用户存在）
@@ -347,10 +364,22 @@ class UserController {
         return;
       }
 
+      // 检查用户是否被软删除
+      if (user.deleted_at) {
+        const error = new UnauthorizedError('用户已经被删除');
+        error.status = 401;
+        ctx.status = 401;
+        ctx.body = {
+          code: 401,
+          message: error.message,
+          data: null
+        };
+        return;
+      }
+
       if (user.status !== 'ACTIVE') {
         const error = new UnauthorizedError('用户已被禁用');
         error.status = 401;
-        ctx.status = 401;
         ctx.body = {
           code: 401,
           message: error.message,
@@ -686,6 +715,86 @@ class UserController {
       }
     } catch (error) {
       logger.error('Error restoring user', {
+        name: error.name,
+        message: error.message,
+        stack: error.stack
+      });
+
+      ctx.status = 500;
+      ctx.body = {
+        code: 500,
+        message: '服务器内部错误',
+        data: null
+      };
+    }
+  }
+
+  // 用户登出
+  static async logout(ctx) {
+    try {
+      const { refresh_token } = ctx.request.body;
+      
+      if (!refresh_token) {
+        ctx.status = 400;
+        ctx.body = {
+          code: 400,
+          message: '刷新令牌不能为空',
+          data: null
+        };
+        return;
+      }
+
+      // 验证访问令牌
+      if (!ctx.state.user || !ctx.state.user.user_id) {
+        ctx.status = 401;
+        ctx.body = {
+          code: 401,
+          message: '未授权',
+          data: null
+        };
+        return;
+      }
+
+      // 查找并更新刷新令牌状态
+      const tokenRecord = await RefreshToken.findOne({
+        where: {
+          token: refresh_token,
+          status: 'ACTIVE'
+        }
+      });
+
+      if (tokenRecord) {
+        await tokenRecord.update({
+          status: 'REVOKED',
+          updated_at: new Date()
+        });
+      }
+
+      // 记录操作日志
+      try {
+        await OperationLog.create({
+          user_id: ctx.state.user.user_id,
+          operation_type: 'LOGOUT',
+          resource_type: 'user',
+          resource_id: ctx.state.user.user_id,
+          status: 'SUCCESS'
+        });
+      } catch (logError) {
+        logger.error('Failed to create operation log', {
+          error: logError,
+          user_id: ctx.state.user.user_id,
+          operation_type: 'LOGOUT'
+        });
+      }
+
+      ctx.status = 200;
+      ctx.body = {
+        code: 200,
+        message: 'success',
+        data: null
+      };
+    } catch (error) {
+      logger.error('Error during logout', {
         name: error.name,
         message: error.message,
         stack: error.stack

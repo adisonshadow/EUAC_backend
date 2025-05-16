@@ -19,47 +19,38 @@ DB_NAME=$(jq -r '.postgresql.database' "$CONFIG_FILE")
 DB_USER=$(jq -r '.postgresql.user' "$CONFIG_FILE")
 DB_PASS=$(jq -r '.postgresql.password' "$CONFIG_FILE")
 
-# 检查PostgreSQL连接
-check_db_connection() {
-  echo "测试数据库连接..."
-  if ! PGPASSWORD="$DB_PASS" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -c "\q"; then
-    echo "错误：无法连接到数据库"
-    exit 1
-  fi
-}
+# 构建psql命令
+PSQL_CMD="psql -h $DB_HOST -p $DB_PORT -U $DB_USER -d $DB_NAME"
 
-# 执行SQL文件
-execute_sql_file() {
-  local file_path="$1"
-  echo "执行SQL文件: $file_path"
-  PGPASSWORD="$DB_PASS" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -f "$file_path"
-}
+# 检查数据库连接
+echo "测试数据库连接..."
+PGPASSWORD="$DB_PASS" $PSQL_CMD -c "SELECT 1;" || { echo "数据库连接失败"; exit 1; }
 
-# 主函数
-main() {
-  check_db_connection
-  
-  echo "开始重置数据库表..."
-  PGPASSWORD="$DB_PASS" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -c "
-    DROP SCHEMA IF EXISTS uac CASCADE;
-    CREATE SCHEMA uac;
-  "
-  echo "数据库重置完成"
+# 重置数据库表
+echo "开始重置数据库表..."
+PGPASSWORD="$DB_PASS" $PSQL_CMD -c "DROP SCHEMA IF EXISTS uac CASCADE; CREATE SCHEMA uac;" || { echo "重置数据库失败"; exit 1; }
+echo "数据库重置完成"
 
-  echo "开始创建数据库结构..."
-  # 执行schema创建
-  execute_sql_file "$(dirname "$0")/../Documents/UAC_Schema.sql"
-  echo "数据库结构创建完成"
+# 安装pgcrypto扩展
+echo "安装pgcrypto扩展..."
+PGPASSWORD="$DB_PASS" $PSQL_CMD -c "CREATE EXTENSION IF NOT EXISTS pgcrypto SCHEMA public;" || { echo "安装pgcrypto扩展失败"; exit 1; }
+echo "pgcrypto扩展安装完成"
 
-  # 如果指定了--with-mock，导入测试数据
-  if [ "${1:-}" = "--with-mock" ] || [ "${2:-}" = "--with-mock" ]; then
+# 创建数据库结构
+echo "开始创建数据库结构..."
+PGPASSWORD="$DB_PASS" $PSQL_CMD -f "$(dirname "$0")/../Documents/UAC_Schema.sql" || { echo "创建数据库结构失败"; exit 1; }
+echo "数据库结构创建完成"
+
+# 创建超级管理员
+echo "创建超级管理员..."
+PGPASSWORD="$DB_PASS" $PSQL_CMD -f "$(dirname "$0")/superadmin.sql" || { echo "创建超级管理员失败"; exit 1; }
+echo "超级管理员创建完成"
+
+# 如果需要，导入测试数据
+if [[ "$*" == *"--with-mock"* ]]; then
     echo "开始导入测试数据..."
-    execute_sql_file "$(dirname "$0")/../scripts/seed_data.sql"
+    PGPASSWORD="$DB_PASS" $PSQL_CMD -f "$(dirname "$0")/seed_data.sql" || { echo "导入测试数据失败"; exit 1; }
     echo "测试数据导入完成"
-  fi
-  
-  echo "数据库操作完成"
-}
+fi
 
-# 执行主函数
-main "$@"
+echo "数据库操作完成"

@@ -5,6 +5,8 @@ const config = require('./config');
 const logger = require('./utils/logger');
 const errorHandler = require('./middlewares/errorHandler');
 const routes = require('./routes');
+const { koaSwagger } = require('koa2-swagger-ui');
+const swaggerSpec = require('./config/swagger');
 
 // 创建应用实例
 const app = new Koa();
@@ -15,6 +17,26 @@ app.use(errorHandler);
 // 中间件配置
 app.use(cors());
 app.use(bodyParser());
+
+// Swagger UI 配置
+app.use(
+  koaSwagger({
+    routePrefix: '/swagger', // Swagger UI 的访问路径
+    swaggerOptions: {
+      spec: swaggerSpec,
+    },
+  }),
+);
+
+// 添加 OpenAPI JSON 路由
+app.use(async (ctx, next) => {
+  if (ctx.path === '/swagger.json') {
+    ctx.type = 'application/json';
+    ctx.body = swaggerSpec;
+    return;
+  }
+  await next();
+});
 
 // 添加请求日志
 app.use(async (ctx, next) => {

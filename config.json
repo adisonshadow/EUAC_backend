@@ -2,9 +2,10 @@
   "postgresql": {
     "host": "localhost",
     "port": 15432,
-    "database": "UAC",
+    "database": "fyMOM",
     "user": "yoyo",
     "password": "123456",
+    "schema": "uac",
     "max_connections": 20,
     "idle_timeout": 30000,
     "connection_timeout": 2000,

@@ -15,7 +15,7 @@ const sequelize = new Sequelize({
   database: config.postgresql.database,
   username: config.postgresql.user,
   password: config.postgresql.password,
-  schema: 'uac',
+  schema: config.postgresql.schema,
   logging: false,
   define: {
     timestamps: true,

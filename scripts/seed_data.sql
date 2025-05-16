@@ -72,8 +72,8 @@ INSERT INTO uac.users
 SELECT 
   gen_random_uuid(),
   'user_'||s.id,
-  crypt('Test@123', gen_salt('bf')),
-  'user_'||s.id||'@example.com',
+  '$2a$10$8c90r1pL61cViUzyWnGb.OesyqAoTSuWf6pfWVhSBVvaNFnuJko9.',  -- 123456 的 bcrypt 哈希
+  'user_'||s.id||'@test.com',
   '1380000'||LPAD(s.id::text, 4, '0'),
   CASE WHEN s.id%10=0 THEN 'ARCHIVED' ELSE 'ACTIVE' END,
   d.department_id,

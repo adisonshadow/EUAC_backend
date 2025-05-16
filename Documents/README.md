@@ -134,6 +134,19 @@
        - `exceptionsMaxFiles`: 异常日志保留天数，默认为 30d
        - `rejectionsMaxFiles`: Promise拒绝日志保留天数，默认为 30d
 
+2. 安装数据库
+```bash
+npm run 
+
+# 在安装结束后，会初始化一个超级管理员 admin，验证
+
+curl -X POST http://localhost:3000/api/v1/auth/login -H "Content-Type: application/json" -d '{"username":"admin","password":"123456"}'
+
+# 请在初始化结束后删除超级管理员
+
+
+```
+
 ### 日志使用说明
 维护日志将保存在 `logs` 目录下，文件名格式为 `db-maintenance-YYYYMMDD_HHMMSS.log`。  
 如遇权限问题，脚本会输出警告信息，请检查数据库用户权限。
@@ -163,6 +176,14 @@
 # 启动服务
 npm run dev
 ```
+
+## API文档
+- Web API 文档  
+http://localhost:3000/swagger
+
+- Open API 地址  
+http://localhost:3000/swagger.json
+
 
 ## 开发
 ### 部署

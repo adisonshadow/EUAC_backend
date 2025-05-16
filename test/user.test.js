@@ -514,4 +514,76 @@ describe('用户API测试', () => {
       );
     });
   });
+
+  describe('用户登出 POST /api/v1/auth/logout', () => {
+    it('应该成功登出并撤销刷新令牌', async () => {
+      const response = await request(global.testEnv.server)
+        .post('/api/v1/auth/logout')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({
+          refresh_token: refreshToken
+        });
+
+      expect(response.status).toBe(200);
+      expect(response.body.code).toBe(200);
+      expect(response.body.message).toBe('success');
+      expect(response.body.data).toBeNull();
+
+      // 验证刷新令牌已被撤销
+      const tokenRecord = await RefreshToken.findOne({
+        where: {
+          token: refreshToken,
+          status: 'REVOKED'
+        }
+      });
+      expect(tokenRecord).toBeTruthy();
+    });
+
+    it('应该记录登出操作日志', async () => {
+      const response = await request(global.testEnv.server)
+        .post('/api/v1/auth/logout')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({
+          refresh_token: refreshToken
+        });
+
+      expect(response.status).toBe(200);
+
+      const log = await OperationLog.findOne({
+        where: {
+          user_id: testUser.user_id,
+          operation_type: 'LOGOUT',
+          resource_type: 'user'
+        }
+      });
+
+      expect(log).toBeTruthy();
+      expect(log.status).toBe('SUCCESS');
+    });
+
+    it('应该验证刷新令牌不能为空', async () => {
+      const response = await request(global.testEnv.server)
+        .post('/api/v1/auth/logout')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({});
+
+      expect(response.status).toBe(400);
+      expect(response.body.code).toBe(400);
+      expect(response.body.message).toBe('刷新令牌不能为空');
+      expect(response.body.data).toBeNull();
+    });
+
+    it('应该验证访问令牌', async () => {
+      const response = await request(global.testEnv.server)
+        .post('/api/v1/auth/logout')
+        .send({
+          refresh_token: refreshToken
+        });
+
+      expect(response.status).toBe(401);
+      expect(response.body.code).toBe(401);
+      expect(response.body.message).toBe('未授权');
+      expect(response.body.data).toBeNull();
+    });
+  });
 }); 
