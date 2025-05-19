@@ -4,6 +4,7 @@ const departmentController = require('../controllers/departmentController');
 const permissionController = require('../controllers/permissionController');
 const roleController = require('../controllers/roleController');
 const auth = require('../middlewares/auth');
+const captchaController = require('../controllers/captchaController');
 
 const router = new Router({ prefix: '/api/v1' });
 
@@ -91,6 +92,389 @@ const router = new Router({ prefix: '/api/v1' });
 
 /**
  * @swagger
+ * /api/v1/health:
+ *   get:
+ *     summary: 健康检查
+ *     tags: [System]
+ *     responses:
+ *       200:
+ *         description: 服务正常运行
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 code:
+ *                   type: integer
+ *                   example: 200
+ *                 message:
+ *                   type: string
+ *                   example: success
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     status:
+ *                       type: string
+ *                       example: ok
+ */
+router.get('/health', async (ctx) => {
+  ctx.body = { 
+    code: 200,
+    message: 'success',
+    data: { status: 'ok' }
+  };
+});
+
+/**
+ * @swagger
+ * /api/v1/auth/login:
+ *   post:
+ *     summary: 用户登录
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - username
+ *               - password
+ *             properties:
+ *               username:
+ *                 type: string
+ *                 description: 用户名
+ *               password:
+ *                 type: string
+ *                 format: password
+ *                 description: 密码
+ *     responses:
+ *       200:
+ *         description: 登录成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 code:
+ *                   type: integer
+ *                   example: 200
+ *                 message:
+ *                   type: string
+ *                   example: success
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     token:
+ *                       type: string
+ *                       description: 访问令牌
+ *                     refresh_token:
+ *                       type: string
+ *                       description: 刷新令牌
+ *                     expires_in:
+ *                       type: string
+ *                       description: 过期时间
+ *       202:
+ *         description: 需要验证码
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 code:
+ *                   type: integer
+ *                   example: 202
+ *                 message:
+ *                   type: string
+ *                   example: 需要验证码
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     need_captcha:
+ *                       type: boolean
+ *                       example: true
+ *       400:
+ *         $ref: '#/components/responses/400'
+ *       403:
+ *         $ref: '#/components/responses/403'
+ *       429:
+ *         description: 登录失败次数过多
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 code:
+ *                   type: integer
+ *                   example: 429
+ *                 message:
+ *                   type: string
+ *                   example: 登录失败次数过多，请一小时后重试
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     next_attempt_time:
+ *                       type: string
+ *                       format: date-time
+ *                       description: 下次可尝试的时间
+ *                       example: "2024-03-20T10:00:00Z"
+ */
+router.post('/auth/login', userController.login);
+
+/**
+ * @swagger
+ * /api/v1/auth/refresh:
+ *   post:
+ *     summary: 刷新访问令牌
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - refresh_token
+ *             properties:
+ *               refresh_token:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: 刷新成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 code:
+ *                   type: integer
+ *                   example: 200
+ *                 message:
+ *                   type: string
+ *                   example: success
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     token:
+ *                       type: string
+ *                     refresh_token:
+ *                       type: string
+ *                     expires_in:
+ *                       type: string
+ *       401:
+ *         description: 刷新失败
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 code:
+ *                   type: integer
+ *                   example: 401
+ *                 message:
+ *                   type: string
+ *                   example: 刷新令牌无效或已过期
+ *                 data:
+ *                   type: object
+ *                   nullable: true
+ */
+router.post('/auth/refresh', userController.refreshToken);
+
+/**
+ * @swagger
+ * /api/v1/auth/logout:
+ *   post:
+ *     summary: 用户登出
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - refresh_token
+ *             properties:
+ *               refresh_token:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: 登出成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 code:
+ *                   type: integer
+ *                   example: 200
+ *                 message:
+ *                   type: string
+ *                   example: success
+ *                 data:
+ *                   type: object
+ *                   nullable: true
+ *       400:
+ *         description: 刷新令牌不能为空
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 code:
+ *                   type: integer
+ *                   example: 400
+ *                 message:
+ *                   type: string
+ *                   example: 刷新令牌不能为空
+ *                 data:
+ *                   type: object
+ *                   nullable: true
+ *       401:
+ *         description: 未授权
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 code:
+ *                   type: integer
+ *                   example: 401
+ *                 message:
+ *                   type: string
+ *                   example: 未授权
+ *                 data:
+ *                   type: object
+ *                   nullable: true
+ *       500:
+ *         description: 服务器内部错误
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 code:
+ *                   type: integer
+ *                   example: 500
+ *                 message:
+ *                   type: string
+ *                   example: 服务器内部错误
+ *                 data:
+ *                   type: object
+ *                   nullable: true
+ */
+router.post('/auth/logout', auth, userController.logout);
+
+/**
+ * @swagger
+ * /api/v1/captcha/generate:
+ *   post:
+ *     summary: 生成滑块验证码
+ *     tags: [Auth]
+ *     responses:
+ *       200:
+ *         description: 生成成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 code:
+ *                   type: integer
+ *                   example: 200
+ *                 message:
+ *                   type: string
+ *                   example: success
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     captcha_id:
+ *                       type: string
+ *                     bg_url:
+ *                       type: string
+ *                     puzzle_url:
+ *                       type: string
+ */
+router.post('/captcha/generate', captchaController.generate);
+
+/**
+ * @swagger
+ * /api/v1/captcha/verify:
+ *   post:
+ *     summary: 验证滑块位置
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - captcha_id
+ *               - x
+ *               - y
+ *             properties:
+ *               captcha_id:
+ *                 type: string
+ *                 format: uuid
+ *                 description: 验证码ID
+ *               x:
+ *                 type: number
+ *                 format: float
+ *                 description: 滑块X坐标
+ *               y:
+ *                 type: number
+ *                 format: float
+ *                 description: 滑块Y坐标
+ *               duration:
+ *                 type: number
+ *                 format: float
+ *                 description: 滑动耗时（毫秒）
+ *               trail:
+ *                 type: array
+ *                 description: 滑动轨迹
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     x:
+ *                       type: number
+ *                       format: float
+ *                       description: X坐标
+ *                     y:
+ *                       type: number
+ *                       format: float
+ *                       description: Y坐标
+ *                     timestamp:
+ *                       type: number
+ *                       format: int64
+ *                       description: 时间戳
+ *     responses:
+ *       200:
+ *         description: 验证成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 code:
+ *                   type: integer
+ *                   example: 200
+ *                 message:
+ *                   type: string
+ *                   example: success
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     verified:
+ *                       type: boolean
+ *                       description: 验证结果
+ */
+router.post('/captcha/verify', captchaController.verify);
+
+/**
+ * @swagger
  * /api/v1/users:
  *   post:
  *     summary: 创建新用户
@@ -143,6 +527,94 @@ router.post('/users', auth, userController.create);
  *         description: 服务器错误
  */
 router.get('/users', auth, userController.list);
+
+/**
+ * @swagger
+ * /api/v1/users/{user_id}:
+ *   get:
+ *     summary: 获取用户详情
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: user_id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: 用户ID
+ *     responses:
+ *       200:
+ *         description: 成功获取用户详情
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 code:
+ *                   type: integer
+ *                   example: 200
+ *                 message:
+ *                   type: string
+ *                   example: success
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     user_id:
+ *                       type: string
+ *                       format: uuid
+ *                       description: 用户ID
+ *                     username:
+ *                       type: string
+ *                       description: 用户名
+ *                     name:
+ *                       type: string
+ *                       description: 用户姓名
+ *                     avatar:
+ *                       type: string
+ *                       description: 用户头像URL
+ *                     gender:
+ *                       type: string
+ *                       enum: [MALE, FEMALE, OTHER]
+ *                       description: 用户性别
+ *                     email:
+ *                       type: string
+ *                       format: email
+ *                       description: 电子邮箱
+ *                     phone:
+ *                       type: string
+ *                       description: 电话号码
+ *                     status:
+ *                       type: string
+ *                       enum: [ACTIVE, DISABLED, LOCKED, ARCHIVED]
+ *                       description: 用户状态
+ *                     department_id:
+ *                       type: string
+ *                       format: uuid
+ *                       description: 部门ID
+ *                     created_at:
+ *                       type: string
+ *                       format: date-time
+ *                       description: 创建时间
+ *                     updated_at:
+ *                       type: string
+ *                       format: date-time
+ *                       description: 更新时间
+ *       401:
+ *         description: 未授权
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/responses/401'
+ *       404:
+ *         description: 用户不存在
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/responses/404'
+ */
+router.get('/users/:user_id', auth, userController.getById);
 
 /**
  * @swagger
@@ -233,101 +705,6 @@ router.delete('/users/:user_id', auth, userController.delete);
  *         description: 用户不存在
  */
 router.post('/users/:user_id/restore', auth, userController.restore);
-
-/**
- * @swagger
- * /api/v1/auth/login:
- *   post:
- *     summary: 用户登录
- *     tags: [Auth]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - username
- *               - password
- *             properties:
- *               username:
- *                 type: string
- *               password:
- *                 type: string
- *     responses:
- *       200:
- *         description: 登录成功
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 token:
- *                   type: string
- *                 refresh_token:
- *                   type: string
- *                 expires_in:
- *                   type: string
- *       401:
- *         description: 登录失败
- */
-router.post('/auth/login', userController.login);
-
-/**
- * @swagger
- * /api/v1/auth/refresh:
- *   post:
- *     summary: 刷新访问令牌
- *     tags: [Auth]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - refresh_token
- *             properties:
- *               refresh_token:
- *                 type: string
- *     responses:
- *       200:
- *         description: 刷新成功
- *       401:
- *         description: 刷新失败
- */
-router.post('/auth/refresh', userController.refreshToken);
-
-/**
- * @swagger
- * /api/v1/auth/logout:
- *   post:
- *     summary: 用户登出
- *     tags: [Auth]
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - refresh_token
- *             properties:
- *               refresh_token:
- *                 type: string
- *     responses:
- *       200:
- *         description: 登出成功
- *       400:
- *         description: 刷新令牌不能为空
- *       401:
- *         description: 未授权
- *       500:
- *         description: 服务器内部错误
- */
-router.post('/auth/logout', auth, userController.logout);
 
 // 部门相关路由
 /**
@@ -973,40 +1350,5 @@ router.post('/data-permissions/rules', auth, permissionController.createRule);
  *         description: 未授权
  */
 router.get('/data-permissions/rules', auth, permissionController.getRules);
-
-/**
- * @swagger
- * /api/v1/health:
- *   get:
- *     summary: 健康检查
- *     tags: [System]
- *     responses:
- *       200:
- *         description: 服务正常运行
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 code:
- *                   type: integer
- *                   example: 200
- *                 message:
- *                   type: string
- *                   example: success
- *                 data:
- *                   type: object
- *                   properties:
- *                     status:
- *                       type: string
- *                       example: ok
- */
-router.get('/health', async (ctx) => {
-  ctx.body = { 
-    code: 200,
-    message: 'success',
-    data: { status: 'ok' }
-  };
-});
 
 module.exports = router; 

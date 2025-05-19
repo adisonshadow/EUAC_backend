@@ -73,20 +73,22 @@ SELECT
   gen_random_uuid(),
   'user_'||s.id,
   '$2a$10$8c90r1pL61cViUzyWnGb.OesyqAoTSuWf6pfWVhSBVvaNFnuJko9.',  -- 123456 的 bcrypt 哈希
+  CASE WHEN s.id % 3 = 0 THEN '张三' || s.id
+       WHEN s.id % 3 = 1 THEN '李四' || s.id
+       ELSE '王五' || s.id END,  -- 姓名
+  CASE WHEN s.id % 5 = 0 THEN 'https://example.com/avatars/' || s.id || '.jpg'
+       ELSE NULL END,  -- 头像
+  CASE WHEN s.id % 3 = 0 THEN 'MALE'
+       WHEN s.id % 3 = 1 THEN 'FEMALE'
+       ELSE 'OTHER' END,  -- 性别
   'user_'||s.id||'@test.com',
   '1380000'||LPAD(s.id::text, 4, '0'),
   CASE WHEN s.id%10=0 THEN 'ARCHIVED' ELSE 'ACTIVE' END,
-  d.department_id,
-  now(),
-  now(),
-  now()
-FROM generate_series(1,100) s(id)
-CROSS JOIN (
-  SELECT department_id 
-  FROM uac.departments 
-  ORDER BY random() 
-  LIMIT 1
-) d;
+  (SELECT department_id FROM uac.departments ORDER BY random() LIMIT 1),  -- 随机分配部门
+  CURRENT_TIMESTAMP,  -- 创建时间
+  CURRENT_TIMESTAMP,  -- 更新时间
+  CASE WHEN s.id%10=0 THEN CURRENT_TIMESTAMP ELSE NULL END  -- 删除时间
+FROM generate_series(1,100) s(id);
 
 -- 分配角色权限
 INSERT INTO uac.role_permissions

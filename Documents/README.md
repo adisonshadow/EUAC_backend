@@ -35,6 +35,104 @@
 - 动态权限控制：根据部门、职级等属性自动分配数据查看范围（如仅本部门报表）  
 - 细粒度管控：支持控制到具体操作（查看/编辑/导出）甚至数据字段  
 
+**细粒度权限控制详解**  
+1. 数据级别控制
+   - 支持控制到具体的数据记录级别
+   - 例如：部门主管只能查看本部门的员工信息
+   - 通过数据权限规则实现字段级权限控制
+
+2. 操作级别控制
+   - 精确控制用户能执行的具体操作
+   - 例如：某些用户只能查看数据，不能修改
+   - 支持增删改查等基础操作的细粒度控制
+
+3. 资源级别控制
+   - 控制用户能访问的具体资源类型
+   - 例如：用户只能访问特定的模块或功能
+   - 支持多维度资源访问控制
+
+4. 条件控制
+   - 支持设置复杂的访问条件
+   - 例如：特定时间段访问、特定IP访问等
+   - 通过JSON格式的规则配置实现灵活控制
+
+**API实现方式**  
+1. 权限检查接口
+```bash
+# 检查用户权限
+POST /api/v1/permissions/check
+Content-Type: application/json
+Authorization: Bearer <token>
+
+{
+  "user_id": "用户ID",
+  "resource_type": "资源类型",
+  "action": "操作类型"
+}
+
+# 响应示例
+{
+  "code": 200,
+  "message": "success",
+  "data": {
+    "has_permission": true,
+    "conditions": {
+      "department_id": ["部门ID1", "部门ID2"],
+      "time_range": {
+        "start": "09:00",
+        "end": "18:00"
+      }
+    }
+  }
+}
+```
+
+2. 数据权限规则管理
+```bash
+# 创建数据权限规则
+POST /api/v1/data-permissions/rules
+Content-Type: application/json
+Authorization: Bearer <token>
+
+{
+  "role_id": "角色ID",
+  "resource_type": "资源类型",
+  "conditions": {
+    "field": "department_id",
+    "operator": "in",
+    "value": ["部门ID1", "部门ID2"]
+  }
+}
+
+# 获取数据权限规则
+GET /api/v1/data-permissions/rules?role_id=<角色ID>&resource_type=<资源类型>
+Authorization: Bearer <token>
+```
+
+3. 用户权限查询
+```bash
+# 获取用户所有权限
+GET /api/v1/permissions/user/:user_id
+Authorization: Bearer <token>
+
+# 响应示例
+{
+  "code": 200,
+  "message": "success",
+  "data": {
+    "permissions": [
+      {
+        "resource_type": "user",
+        "actions": ["read", "update"],
+        "conditions": {
+          "department_id": ["部门ID1"]
+        }
+      }
+    ]
+  }
+}
+```
+
 **审计与合规保障**  
 - 权限变更全程留痕，支持操作记录追溯与定期合规审查  
 - 敏感操作审批流程，规避越权风险  
@@ -190,6 +288,12 @@ http://localhost:3000/swagger.json
 ```bash
 # 启动服务
 npm run dev
+```
+
+### git
+```bash
+# 提交到main分支
+git push origin main
 ```
 
 ### 调试

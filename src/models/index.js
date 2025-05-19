@@ -13,6 +13,7 @@ const RefreshTokenModel = require('./refresh_token');
 const DepartmentClosureModel = require('./department_closure');
 const DepartmentHistoryModel = require('./department_history');
 const LoginAttempt = require('./loginAttempt');
+const CaptchaModel = require('./captcha');
 
 // 初始化所有模型
 const User = UserModel(sequelize);
@@ -26,6 +27,7 @@ const OperationLog = OperationLogModel(sequelize);
 const RefreshToken = RefreshTokenModel(sequelize);
 const DepartmentClosure = DepartmentClosureModel(sequelize);
 const DepartmentHistory = DepartmentHistoryModel(sequelize);
+const Captcha = CaptchaModel(sequelize);
 
 // 设置模型关联关系
 User.belongsTo(Department, { foreignKey: 'department_id' });
@@ -65,5 +67,6 @@ module.exports = {
   RefreshToken,
   DepartmentClosure,
   DepartmentHistory,
-  LoginAttempt
+  LoginAttempt,
+  Captcha
 }; 

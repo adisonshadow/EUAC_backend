@@ -3,7 +3,7 @@ const jwt = require('jsonwebtoken');
 const { UniqueConstraintError, Op } = require('sequelize');
 const config = require('../config');
 const logger = require('../utils/logger');
-const { User, LoginAttempt, OperationLog, RefreshToken, Department, Role } = require('../models');
+const { User, LoginAttempt, OperationLog, RefreshToken, Department, Role, Captcha } = require('../models');
 const { sequelize } = require('../models');
 
 // 自定义错误类
@@ -277,20 +277,11 @@ class UserController {
 
   // 用户登录
   static async login(ctx) {
-    const { username, password } = ctx.request.body;
+    const { username, password, captcha_data } = ctx.request.body;
+    const captcha_id = captcha_data?.captcha_id;
 
     try {
       logger.debug('User login attempt', { username });
-      logger.debug('Received password', { password });
-      
-      console.log('username', username);
-      console.log('password', password);
-      console.log('Database config:', {
-        host: sequelize.config.host,
-        port: sequelize.config.port,
-        database: sequelize.config.database,
-        username: sequelize.config.username
-      });
       
       if (!username || !password) {
         const error = new CustomValidationError('用户名和密码不能为空');
@@ -298,26 +289,59 @@ class UserController {
         throw error;
       }
 
+      // 检查是否需要验证码
+      if (config.api.loginVerify.enabled) {
+        // 如果没有提供验证码ID，返回需要验证码的响应
+        if (!captcha_id) {
+          ctx.status = 202;
+          ctx.body = {
+            code: 202,
+            message: '需要验证码',
+            data: {
+              need_captcha: true
+            }
+          };
+          return;
+        }
+
+        // 验证验证码
+        const captcha = await Captcha.findOne({
+          where: {
+            captcha_id,
+            status: 'USED',
+            verified_at: {
+              [Op.not]: null
+            }
+          }
+        });
+
+        if (!captcha) {
+          ctx.status = 400;
+          ctx.body = {
+            code: 400,
+            message: '验证码无效或未验证',
+            data: null
+          };
+          return;
+        }
+
+        // 验证通过后删除验证码记录
+        await captcha.destroy();
+        logger.debug('Captcha record deleted after successful verification', { captcha_id });
+      }
+
+      // 检查登录限制
+      const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+      
+      // 先查找用户
       const user = await User.findOne({
         where: { username },
         attributes: ['user_id', 'username', 'password_hash', 'status', 'deleted_at'],
         paranoid: false  // 包括已删除的记录
       });
 
-      console.log('user:', user);
-      console.log('SQL Query:', User.findOne.toString());
-
-      logger.debug('User found', user ? { 
-        user_id: user.user_id, 
-        username: user.username,
-        status: user.status,
-        password_hash: user.password_hash,
-        deleted_at: user.deleted_at
-      } : null);
-
-      // 检查登录限制（如果用户存在）
+      // 如果用户存在，检查登录限制
       if (user) {
-        const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
         const recentAttempts = await LoginAttempt.count({
           where: {
             user_id: user.user_id,
@@ -330,9 +354,9 @@ class UserController {
 
         if (recentAttempts >= 5) {
           const nextAttemptTime = new Date(Date.now() + 60 * 60 * 1000);
-          ctx.status = 401;
+          ctx.status = 429;
           ctx.body = {
-            code: 401,
+            code: 429,
             message: '登录失败次数过多，请一小时后重试',
             data: {
               next_attempt_time: nextAttemptTime.toISOString()
@@ -340,24 +364,27 @@ class UserController {
           };
           return;
         }
-
-        // 记录登录尝试（只在用户存在时）
-        const loginAttempt = {
-          user_id: user.user_id,
-          ip_address: ctx.ip,
-          user_agent: ctx.headers['user-agent'],
-          success: false
-        };
-
-        await LoginAttempt.create(loginAttempt);
       }
+
+      // 记录登录尝试
+      const loginAttempt = {
+        ip_address: ctx.ip,
+        user_agent: ctx.headers['user-agent'],
+        success: false
+      };
+
+      if (user) {
+        loginAttempt.user_id = user.user_id;
+      }
+
+      await LoginAttempt.create(loginAttempt);
 
       if (!user) {
         const error = new UnauthorizedError('用户名或密码错误');
-        error.status = 401;
-        ctx.status = 401;
+        error.status = 400;
+        ctx.status = 400;
         ctx.body = {
-          code: 401,
+          code: 400,
           message: error.message,
           data: null
         };
@@ -367,10 +394,10 @@ class UserController {
       // 检查用户是否被软删除
       if (user.deleted_at) {
         const error = new UnauthorizedError('用户已经被删除');
-        error.status = 401;
-        ctx.status = 401;
+        error.status = 400;
+        ctx.status = 400;
         ctx.body = {
-          code: 401,
+          code: 400,
           message: error.message,
           data: null
         };
@@ -379,15 +406,17 @@ class UserController {
 
       if (user.status !== 'ACTIVE') {
         const error = new UnauthorizedError('用户已被禁用');
-        error.status = 401;
+        error.status = 403;
+        ctx.status = 403;
         ctx.body = {
-          code: 401,
+          code: 403,
           message: error.message,
           data: null
         };
         return;
       }
 
+      // 验证密码
       const isValid = await bcrypt.compare(password, user.password_hash);
       logger.debug('Password validation', { isValid });
 
@@ -421,12 +450,14 @@ class UserController {
 
       logger.debug('User logged in successfully', { username });
 
+      // 生成访问令牌
       const token = jwt.sign(
         { user_id: user.user_id, username: user.username },
         config.jwt.secret,
         { expiresIn: config.jwt.expiresIn }
       );
       
+      // 生成刷新令牌
       const refreshToken = jwt.sign(
         { user_id: user.user_id },
         config.jwt.refreshSecret || config.jwt.secret,
@@ -441,6 +472,7 @@ class UserController {
         status: 'ACTIVE'
       });
 
+      // 登录成功
       ctx.status = 200;
       ctx.body = {
         code: 200,
@@ -795,6 +827,63 @@ class UserController {
       };
     } catch (error) {
       logger.error('Error during logout', {
+        name: error.name,
+        message: error.message,
+        stack: error.stack
+      });
+
+      ctx.status = 500;
+      ctx.body = {
+        code: 500,
+        message: '服务器内部错误',
+        data: null
+      };
+    }
+  }
+
+  // 获取用户详情
+  static async getById(ctx) {
+    const { user_id } = ctx.params;
+
+    try {
+      logger.debug('Getting user details', { user_id });
+      
+      // 查询用户信息
+      const user = await User.findOne({
+        where: { user_id: user_id },
+        attributes: [
+          'user_id',
+          'username',
+          'name',
+          'avatar',
+          'gender',
+          'email',
+          'phone',
+          'status',
+          'department_id',
+          'created_at',
+          'updated_at'
+        ]
+      });
+
+      if (!user) {
+        ctx.status = 404;
+        ctx.body = {
+          code: 404,
+          message: '用户不存在',
+          data: null
+        };
+        return;
+      }
+
+      ctx.status = 200;
+      ctx.body = {
+        code: 200,
+        message: 'success',
+        data: user
+      };
+    } catch (error) {
+      logger.error('Error getting user details', {
         name: error.name,
         message: error.message,
         stack: error.stack

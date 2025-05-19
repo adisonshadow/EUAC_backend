@@ -64,6 +64,9 @@ CREATE TABLE uac.users (
     user_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     username VARCHAR(64) NOT NULL UNIQUE,
     password_hash VARCHAR(128) NOT NULL,
+    name VARCHAR(100),
+    avatar VARCHAR(255),
+    gender VARCHAR(10) CHECK(gender IN ('MALE', 'FEMALE', 'OTHER', NULL)),
     email VARCHAR(255),
     phone VARCHAR(20),
     status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE' CHECK(status IN ('ACTIVE', 'DISABLED', 'LOCKED', 'ARCHIVED')),
@@ -78,6 +81,11 @@ CREATE TABLE uac.users (
 ALTER TABLE uac.users
 ADD CONSTRAINT fk_users_department
 FOREIGN KEY (department_id) REFERENCES uac.departments(department_id);
+
+-- 添加用户表注释
+COMMENT ON COLUMN uac.users.name IS '用户姓名';
+COMMENT ON COLUMN uac.users.avatar IS '用户头像URL';
+COMMENT ON COLUMN uac.users.gender IS '用户性别：MALE-男, FEMALE-女, OTHER-其他';
 
 -- 第四部分：创建部门相关表
 -- 部门闭包表（用于高效的层级查询）
@@ -215,6 +223,34 @@ CREATE TABLE uac.login_attempts (
 ALTER TABLE uac.login_attempts
 ADD CONSTRAINT fk_login_attempts_user
 FOREIGN KEY (user_id) REFERENCES uac.users(user_id);
+
+-- 验证码表
+CREATE TABLE uac.captchas (
+    captcha_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    bg_url VARCHAR(255) NOT NULL,
+    puzzle_url VARCHAR(255) NOT NULL,
+    target_x INTEGER NOT NULL,
+    target_y INTEGER NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    expires_at TIMESTAMPTZ NOT NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE' CHECK(status IN ('ACTIVE', 'USED', 'EXPIRED')),
+    verified_at TIMESTAMPTZ
+);
+
+-- 添加验证码表索引
+CREATE INDEX idx_captchas_expires_at ON uac.captchas(expires_at);
+CREATE INDEX idx_captchas_status ON uac.captchas(status);
+
+-- 添加验证码表注释
+COMMENT ON COLUMN uac.captchas.captcha_id IS '验证码ID';
+COMMENT ON COLUMN uac.captchas.bg_url IS '背景图URL';
+COMMENT ON COLUMN uac.captchas.puzzle_url IS '拼图URL';
+COMMENT ON COLUMN uac.captchas.target_x IS '目标X坐标';
+COMMENT ON COLUMN uac.captchas.target_y IS '目标Y坐标';
+COMMENT ON COLUMN uac.captchas.created_at IS '创建时间';
+COMMENT ON COLUMN uac.captchas.expires_at IS '过期时间';
+COMMENT ON COLUMN uac.captchas.status IS '状态：ACTIVE-有效, USED-已使用, EXPIRED-已过期';
+COMMENT ON COLUMN uac.captchas.verified_at IS '验证时间';
 
 -- 第七部分：创建触发器
 CREATE OR REPLACE FUNCTION uac.update_login_attempts_updated_at()

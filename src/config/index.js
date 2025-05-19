@@ -16,7 +16,9 @@ module.exports = {
   api: config.api,
   jwt: {
     secret: env === 'test' ? process.env.TEST_JWT_SECRET : config.api.security.jwtSecret,
-    expiresIn: config.api.security.jwtExpiresIn
+    refreshSecret: env === 'test' ? process.env.TEST_JWT_REFRESH_SECRET : config.api.security.jwtSecret,
+    expiresIn: config.api.security.jwtExpiresIn,
+    refreshExpiresIn: '7d'
   },
   logging: config.logging
 }; 

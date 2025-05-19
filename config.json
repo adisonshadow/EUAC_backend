@@ -29,6 +29,10 @@
       "jwtSecret": "my-jwt-secret-key",
       "jwtExpiresIn": "24h",
       "bcryptSaltRounds": 10
+    },
+    "loginVerify": {
+      "enabled": true,
+      "expiresIn": 300
     }
   },
   "logging": {

@@ -8,7 +8,9 @@ const ERROR_TYPES = {
   NotFoundError: 404,
   ConflictError: 409,
   InternalServerError: 500,
-  CustomValidationError: 400
+  CustomValidationError: 400,
+  SequelizeValidationError: 400,
+  SequelizeUniqueConstraintError: 409
 };
 
 // 安全错误消息
@@ -77,6 +79,16 @@ const errorHandler = async (ctx, next) => {
       errorResponse.stack = err.stack;
       errorResponse.name = err.name;
       errorResponse.details = err.details || null;
+      
+      // 如果是 Sequelize 错误，添加更多详细信息
+      if (err.name === 'SequelizeValidationError' || err.name === 'SequelizeUniqueConstraintError') {
+        errorResponse.errors = err.errors.map(e => ({
+          message: e.message,
+          type: e.type,
+          path: e.path,
+          value: e.value
+        }));
+      }
     }
 
     // 设置响应状态码和类型
@@ -88,7 +100,9 @@ const errorHandler = async (ctx, next) => {
     logger.debug('Error response', {
       status,
       message: errorResponse.message,
-      path: ctx.path
+      path: ctx.path,
+      details: errorResponse.details,
+      stack: errorResponse.stack
     });
   }
 };

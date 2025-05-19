@@ -60,6 +60,24 @@ module.exports = (sequelize) => {
       field: 'password_hash',
       comment: '密码哈希'
     },
+    name: {
+      type: DataTypes.STRING(100),
+      allowNull: true,
+      field: 'name',
+      comment: '用户姓名'
+    },
+    avatar: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+      field: 'avatar',
+      comment: '用户头像URL'
+    },
+    gender: {
+      type: DataTypes.STRING(10),
+      allowNull: true,
+      field: 'gender',
+      comment: '用户性别：MALE-男, FEMALE-女, OTHER-其他'
+    },
     email: {
       type: DataTypes.STRING(255),
       allowNull: true,
