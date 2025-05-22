@@ -11,7 +11,7 @@ module.exports = (sequelize) => {
       comment: '历史ID'
     },
     department_id: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.UUID,
       allowNull: false,
       comment: '部门ID'
     },
@@ -26,7 +26,7 @@ module.exports = (sequelize) => {
       comment: '部门编码'
     },
     parent_id: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.UUID,
       allowNull: true,
       comment: '父部门ID'
     },

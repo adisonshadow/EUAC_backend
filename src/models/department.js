@@ -17,9 +17,9 @@ class Department extends Model {
 module.exports = (sequelize) => {
   Department.init({
     department_id: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.UUID,
       primaryKey: true,
-      autoIncrement: true,
+      defaultValue: DataTypes.UUIDV4,
       comment: '部门ID'
     },
     name: {
@@ -36,7 +36,7 @@ module.exports = (sequelize) => {
       comment: '部门编码'
     },
     parent_id: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.UUID,
       allowNull: true,
       field: 'parent_id',
       comment: '父部门ID'

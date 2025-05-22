@@ -5,8 +5,11 @@ const permissionController = require('../controllers/permissionController');
 const roleController = require('../controllers/roleController');
 const auth = require('../middlewares/auth');
 const captchaController = require('../controllers/captchaController');
+const uploadController = require('../controllers/uploadController');
 
-const router = new Router({ prefix: '/api/v1' });
+const router = new Router({
+  prefix: '/api/v1'
+});
 
 /**
  * @swagger
@@ -26,6 +29,9 @@ const router = new Router({ prefix: '/api/v1' });
  *         username:
  *           type: string
  *           description: 用户名
+ *         name:
+ *           type: string
+ *           description: 用户姓名
  *         email:
  *           type: string
  *           format: email
@@ -34,26 +40,75 @@ const router = new Router({ prefix: '/api/v1' });
  *           type: string
  *           format: password
  *           description: 密码
+ *         avatar:
+ *           type: string
+ *           description: 用户头像URL
+ *         gender:
+ *           type: string
+ *           enum: [MALE, FEMALE, OTHER]
+ *           description: 用户性别
+ *         phone:
+ *           type: string
+ *           description: 电话号码
  *         status:
  *           type: string
- *           enum: [active, inactive]
+ *           enum: [ACTIVE, DISABLED, LOCKED, ARCHIVED]
  *           description: 用户状态
+ *         department_id:
+ *           type: string
+ *           format: uuid
+ *           description: 部门ID
+ *         created_at:
+ *           type: string
+ *           format: date-time
+ *           description: 创建时间
+ *         updated_at:
+ *           type: string
+ *           format: date-time
+ *           description: 更新时间
+ *         deleted_at:
+ *           type: string
+ *           format: date-time
+ *           description: 删除时间
  *     Department:
  *       type: object
  *       required:
  *         - name
+ *         - code
  *       properties:
- *         id:
+ *         department_id:
  *           type: string
  *           format: uuid
  *           description: 部门ID
  *         name:
  *           type: string
  *           description: 部门名称
+ *         code:
+ *           type: string
+ *           description: 部门编码
  *         parent_id:
  *           type: string
  *           format: uuid
  *           description: 父部门ID
+ *         status:
+ *           type: string
+ *           enum: [ACTIVE, DISABLED, ARCHIVED]
+ *           description: 部门状态
+ *         description:
+ *           type: string
+ *           description: 部门描述
+ *         created_at:
+ *           type: string
+ *           format: date-time
+ *           description: 创建时间
+ *         updated_at:
+ *           type: string
+ *           format: date-time
+ *           description: 更新时间
+ *         deleted_at:
+ *           type: string
+ *           format: date-time
+ *           description: 删除时间
  *     Role:
  *       type: object
  *       required:
@@ -95,7 +150,7 @@ const router = new Router({ prefix: '/api/v1' });
  * /api/v1/health:
  *   get:
  *     summary: 健康检查
- *     tags: [System]
+ *     tags: ['System']
  *     responses:
  *       200:
  *         description: 服务正常运行
@@ -130,7 +185,7 @@ router.get('/health', async (ctx) => {
  * /api/v1/auth/login:
  *   post:
  *     summary: 用户登录
- *     tags: [Auth]
+ *     tags: ['Auth']
  *     requestBody:
  *       required: true
  *       content:
@@ -174,6 +229,10 @@ router.get('/health', async (ctx) => {
  *                     expires_in:
  *                       type: string
  *                       description: 过期时间
+ *                     user_id:
+ *                       type: string
+ *                       format: uuid
+ *                       description: 用户ID
  *       202:
  *         description: 需要验证码
  *         content:
@@ -226,7 +285,7 @@ router.post('/auth/login', userController.login);
  * /api/v1/auth/refresh:
  *   post:
  *     summary: 刷新访问令牌
- *     tags: [Auth]
+ *     tags: ['Auth']
  *     requestBody:
  *       required: true
  *       content:
@@ -285,7 +344,7 @@ router.post('/auth/refresh', userController.refreshToken);
  * /api/v1/auth/logout:
  *   post:
  *     summary: 用户登出
- *     tags: [Auth]
+ *     tags: ['Auth']
  *     security:
  *       - bearerAuth: []
  *     requestBody:
@@ -372,7 +431,7 @@ router.post('/auth/logout', auth, userController.logout);
  * /api/v1/captcha/generate:
  *   post:
  *     summary: 生成滑块验证码
- *     tags: [Auth]
+ *     tags: ['Auth']
  *     responses:
  *       200:
  *         description: 生成成功
@@ -404,7 +463,7 @@ router.post('/captcha/generate', captchaController.generate);
  * /api/v1/captcha/verify:
  *   post:
  *     summary: 验证滑块位置
- *     tags: [Auth]
+ *     tags: ['Auth']
  *     requestBody:
  *       required: true
  *       content:
@@ -478,7 +537,7 @@ router.post('/captcha/verify', captchaController.verify);
  * /api/v1/users:
  *   post:
  *     summary: 创建新用户
- *     tags: [Users]
+ *     tags: ['Users']
  *     security:
  *       - bearerAuth: []
  *     requestBody:
@@ -490,12 +549,25 @@ router.post('/captcha/verify', captchaController.verify);
  *     responses:
  *       201:
  *         description: 用户创建成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 code:
+ *                   type: integer
+ *                   example: 201
+ *                 message:
+ *                   type: string
+ *                   example: success
+ *                 data:
+ *                   $ref: '#/components/schemas/User'
  *       400:
- *         description: 请求参数错误
+ *         $ref: '#/components/responses/400'
  *       401:
- *         description: 未授权
+ *         $ref: '#/components/responses/401'
  *       500:
- *         description: 服务器错误
+ *         $ref: '#/components/responses/500'
  */
 router.post('/users', auth, userController.create);
 
@@ -504,7 +576,25 @@ router.post('/users', auth, userController.create);
  * /api/v1/users:
  *   get:
  *     summary: 获取用户列表
- *     tags: [Users]
+ *     description: |
+ *       获取用户列表，支持分页和条件筛选。需要在请求头中携带 Bearer Token。
+ *       
+ *       请求头格式：
+ *       ```
+ *       Authorization: Bearer <your_token>
+ *       ```
+ *       
+ *       支持的查询参数：
+ *       - page: 页码，默认 1
+ *       - size: 每页数量，默认 30
+ *       - username: 用户名（支持模糊搜索）
+ *       - name: 用户姓名（支持模糊搜索）
+ *       - email: 邮箱（支持模糊搜索）
+ *       - phone: 电话（支持模糊搜索）
+ *       - status: 用户状态（精确匹配）
+ *       - gender: 性别（精确匹配）
+ *       - department_id: 部门ID（精确匹配）
+ *     tags: ['Users']
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -512,19 +602,153 @@ router.post('/users', auth, userController.create);
  *         name: page
  *         schema:
  *           type: integer
- *         description: 页码
+ *         description: 页码，默认 1
  *       - in: query
- *         name: limit
+ *         name: size
  *         schema:
  *           type: integer
- *         description: 每页数量
+ *         description: 每页数量，默认 30
+ *       - in: query
+ *         name: username
+ *         schema:
+ *           type: string
+ *         description: 用户名（支持模糊搜索）
+ *       - in: query
+ *         name: name
+ *         schema:
+ *           type: string
+ *         description: 用户姓名（支持模糊搜索）
+ *       - in: query
+ *         name: email
+ *         schema:
+ *           type: string
+ *         description: 邮箱（支持模糊搜索）
+ *       - in: query
+ *         name: phone
+ *         schema:
+ *           type: string
+ *         description: 电话（支持模糊搜索）
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [ACTIVE, DISABLED, LOCKED, ARCHIVED]
+ *         description: 用户状态（精确匹配）
+ *       - in: query
+ *         name: gender
+ *         schema:
+ *           type: string
+ *           enum: [MALE, FEMALE, OTHER]
+ *         description: 用户性别（精确匹配）
+ *       - in: query
+ *         name: department_id
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: 部门ID（精确匹配）
  *     responses:
  *       200:
  *         description: 成功获取用户列表
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 code:
+ *                   type: integer
+ *                   example: 200
+ *                 message:
+ *                   type: string
+ *                   example: success
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     total:
+ *                       type: integer
+ *                       description: 总记录数
+ *                     items:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           user_id:
+ *                             type: string
+ *                             format: uuid
+ *                             description: 用户ID
+ *                           username:
+ *                             type: string
+ *                             description: 用户名
+ *                           name:
+ *                             type: string
+ *                             description: 用户姓名
+ *                           avatar:
+ *                             type: string
+ *                             description: 用户头像URL
+ *                           gender:
+ *                             type: string
+ *                             enum: [MALE, FEMALE, OTHER]
+ *                             description: 用户性别
+ *                           email:
+ *                             type: string
+ *                             format: email
+ *                             description: 电子邮箱
+ *                           phone:
+ *                             type: string
+ *                             description: 电话号码
+ *                           status:
+ *                             type: string
+ *                             enum: [ACTIVE, DISABLED, LOCKED, ARCHIVED]
+ *                             description: 用户状态
+ *                           department_id:
+ *                             type: string
+ *                             format: uuid
+ *                             description: 部门ID
+ *                           created_at:
+ *                             type: string
+ *                             format: date-time
+ *                             description: 创建时间
+ *                           updated_at:
+ *                             type: string
+ *                             format: date-time
+ *                             description: 更新时间
+ *                     page:
+ *                       type: integer
+ *                       description: 当前页码
+ *                     size:
+ *                       type: integer
+ *                       description: 每页数量
  *       401:
  *         description: 未授权
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 code:
+ *                   type: integer
+ *                   example: 401
+ *                 message:
+ *                   type: string
+ *                   example: 未授权
+ *                 data:
+ *                   type: object
+ *                   nullable: true
  *       500:
  *         description: 服务器错误
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 code:
+ *                   type: integer
+ *                   example: 500
+ *                 message:
+ *                   type: string
+ *                   example: 服务器内部错误
+ *                 data:
+ *                   type: object
+ *                   nullable: true
  */
 router.get('/users', auth, userController.list);
 
@@ -533,7 +757,7 @@ router.get('/users', auth, userController.list);
  * /api/v1/users/{user_id}:
  *   get:
  *     summary: 获取用户详情
- *     tags: [Users]
+ *     tags: ['Users']
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -621,7 +845,7 @@ router.get('/users/:user_id', auth, userController.getById);
  * /api/v1/users/{user_id}:
  *   put:
  *     summary: 更新用户信息
- *     tags: [Users]
+ *     tags: ['Users']
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -639,18 +863,55 @@ router.get('/users/:user_id', auth, userController.getById);
  *           schema:
  *             type: object
  *             properties:
+ *               name:
+ *                 type: string
+ *                 description: 用户姓名
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 description: 电子邮箱
+ *               avatar:
+ *                 type: string
+ *                 description: 用户头像URL
+ *               gender:
+ *                 type: string
+ *                 enum: [MALE, FEMALE, OTHER]
+ *                 description: 用户性别
+ *               phone:
+ *                 type: string
+ *                 description: 电话号码
  *               status:
  *                 type: string
- *                 enum: [active, inactive]
+ *                 enum: [ACTIVE, DISABLED, LOCKED, ARCHIVED]
+ *                 description: 用户状态
+ *               department_id:
+ *                 type: string
+ *                 format: uuid
+ *                 description: 部门ID
  *     responses:
  *       200:
  *         description: 用户信息更新成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 code:
+ *                   type: integer
+ *                   example: 200
+ *                 message:
+ *                   type: string
+ *                   example: success
+ *                 data:
+ *                   $ref: '#/components/schemas/User'
  *       400:
- *         description: 请求参数错误
+ *         $ref: '#/components/responses/400'
  *       401:
- *         description: 未授权
+ *         $ref: '#/components/responses/401'
  *       404:
- *         description: 用户不存在
+ *         $ref: '#/components/responses/404'
+ *       500:
+ *         $ref: '#/components/responses/500'
  */
 router.put('/users/:user_id', auth, userController.update);
 
@@ -659,7 +920,7 @@ router.put('/users/:user_id', auth, userController.update);
  * /api/v1/users/{user_id}:
  *   delete:
  *     summary: 删除用户
- *     tags: [Users]
+ *     tags: ['Users']
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -673,10 +934,26 @@ router.put('/users/:user_id', auth, userController.update);
  *     responses:
  *       200:
  *         description: 用户删除成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 code:
+ *                   type: integer
+ *                   example: 200
+ *                 message:
+ *                   type: string
+ *                   example: success
+ *                 data:
+ *                   type: object
+ *                   nullable: true
  *       401:
- *         description: 未授权
+ *         $ref: '#/components/responses/401'
  *       404:
- *         description: 用户不存在
+ *         $ref: '#/components/responses/404'
+ *       500:
+ *         $ref: '#/components/responses/500'
  */
 router.delete('/users/:user_id', auth, userController.delete);
 
@@ -685,7 +962,7 @@ router.delete('/users/:user_id', auth, userController.delete);
  * /api/v1/users/{user_id}/restore:
  *   post:
  *     summary: 恢复已删除的用户
- *     tags: [Users]
+ *     tags: ['Users']
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -712,7 +989,7 @@ router.post('/users/:user_id/restore', auth, userController.restore);
  * /api/v1/departments:
  *   post:
  *     summary: 创建部门
- *     tags: [Departments]
+ *     tags: ['Departments']
  *     security:
  *       - bearerAuth: []
  *     requestBody:
@@ -736,7 +1013,21 @@ router.post('/departments', auth, departmentController.create);
  * /api/v1/departments:
  *   get:
  *     summary: 获取部门列表
- *     tags: [Departments]
+ *     description: |
+ *       获取部门列表，支持分页和条件筛选。分页参数为可选，如果不传则返回所有记录。
+ *       
+ *       请求头格式：
+ *       ```
+ *       Authorization: Bearer <your_token>
+ *       ```
+ *       
+ *       支持的查询参数：
+ *       - page: 页码（可选，与 size 参数一起使用）
+ *       - size: 每页数量（可选，与 page 参数一起使用）
+ *       - name: 部门名称（支持模糊搜索）
+ *       - code: 部门编码（支持模糊搜索）
+ *       - status: 部门状态（精确匹配）
+ *     tags: ['Departments']
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -744,17 +1035,124 @@ router.post('/departments', auth, departmentController.create);
  *         name: page
  *         schema:
  *           type: integer
- *         description: 页码
+ *         description: 页码（可选，与 size 参数一起使用）
  *       - in: query
- *         name: limit
+ *         name: size
  *         schema:
  *           type: integer
- *         description: 每页数量
+ *         description: 每页数量（可选，与 page 参数一起使用）
+ *       - in: query
+ *         name: name
+ *         schema:
+ *           type: string
+ *         description: 部门名称（支持模糊搜索）
+ *       - in: query
+ *         name: code
+ *         schema:
+ *           type: string
+ *         description: 部门编码（支持模糊搜索）
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [ACTIVE, DISABLED, ARCHIVED]
+ *         description: 部门状态（精确匹配）
  *     responses:
  *       200:
  *         description: 成功获取部门列表
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 code:
+ *                   type: integer
+ *                   example: 200
+ *                 message:
+ *                   type: string
+ *                   example: success
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     total:
+ *                       type: integer
+ *                       description: 总记录数
+ *                     items:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           department_id:
+ *                             type: string
+ *                             format: uuid
+ *                             description: 部门ID
+ *                           name:
+ *                             type: string
+ *                             description: 部门名称
+ *                           code:
+ *                             type: string
+ *                             description: 部门编码
+ *                           parent_id:
+ *                             type: string
+ *                             format: uuid
+ *                             description: 父部门ID
+ *                           status:
+ *                             type: string
+ *                             enum: [ACTIVE, DISABLED, ARCHIVED]
+ *                             description: 部门状态
+ *                           description:
+ *                             type: string
+ *                             description: 部门描述
+ *                           created_at:
+ *                             type: string
+ *                             format: date-time
+ *                             description: 创建时间
+ *                           updated_at:
+ *                             type: string
+ *                             format: date-time
+ *                             description: 更新时间
+ *                           deleted_at:
+ *                             type: string
+ *                             format: date-time
+ *                             description: 删除时间
+ *                     current:
+ *                       type: integer
+ *                       description: 当前页码（仅在使用分页时返回）
+ *                     size:
+ *                       type: integer
+ *                       description: 每页数量（仅在使用分页时返回）
  *       401:
  *         description: 未授权
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 code:
+ *                   type: integer
+ *                   example: 401
+ *                 message:
+ *                   type: string
+ *                   example: 未授权
+ *                 data:
+ *                   type: object
+ *                   nullable: true
+ *       500:
+ *         description: 服务器内部错误
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 code:
+ *                   type: integer
+ *                   example: 500
+ *                 message:
+ *                   type: string
+ *                   example: 获取部门列表失败
+ *                 error:
+ *                   type: string
+ *                   description: 错误信息
  */
 router.get('/departments', auth, departmentController.list);
 
@@ -763,7 +1161,14 @@ router.get('/departments', auth, departmentController.list);
  * /api/v1/departments/tree:
  *   get:
  *     summary: 获取部门树结构
- *     tags: [Departments]
+ *     description: |
+ *       获取完整的部门树结构，包含所有子部门。需要在请求头中携带 Bearer Token。
+ *       
+ *       请求头格式：
+ *       ```
+ *       Authorization: Bearer <your_token>
+ *       ```
+ *     tags: ['Departments']
  *     security:
  *       - bearerAuth: []
  *     responses:
@@ -772,9 +1177,47 @@ router.get('/departments', auth, departmentController.list);
  *         content:
  *           application/json:
  *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/Department'
+ *               type: object
+ *               properties:
+ *                 code:
+ *                   type: integer
+ *                   example: 200
+ *                 message:
+ *                   type: string
+ *                   example: success
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     items:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           department_id:
+ *                             type: string
+ *                             format: uuid
+ *                             description: 部门ID
+ *                           name:
+ *                             type: string
+ *                             description: 部门名称
+ *                           code:
+ *                             type: string
+ *                             description: 部门编码
+ *                           parent_id:
+ *                             type: string
+ *                             format: uuid
+ *                             description: 父部门ID
+ *                           status:
+ *                             type: string
+ *                             enum: [ACTIVE, DISABLED, ARCHIVED]
+ *                             description: 部门状态
+ *                           description:
+ *                             type: string
+ *                             description: 部门描述
+ *                           children:
+ *                             type: array
+ *                             items:
+ *                               $ref: '#/components/schemas/Department'
  */
 router.get('/departments/tree', auth, departmentController.getTree);
 
@@ -783,7 +1226,14 @@ router.get('/departments/tree', auth, departmentController.getTree);
  * /api/v1/departments/{department_id}:
  *   get:
  *     summary: 获取部门详情
- *     tags: [Departments]
+ *     description: |
+ *       获取指定部门的详细信息。需要在请求头中携带 Bearer Token。
+ *       
+ *       请求头格式：
+ *       ```
+ *       Authorization: Bearer <your_token>
+ *       ```
+ *     tags: ['Departments']
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -797,10 +1247,62 @@ router.get('/departments/tree', auth, departmentController.getTree);
  *     responses:
  *       200:
  *         description: 成功获取部门详情
- *       401:
- *         description: 未授权
- *       404:
- *         description: 部门不存在
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 code:
+ *                   type: integer
+ *                   example: 200
+ *                 message:
+ *                   type: string
+ *                   example: success
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     department_id:
+ *                       type: string
+ *                       format: uuid
+ *                       description: 部门ID
+ *                       example: "123e4567-e89b-12d3-a456-426614174000"
+ *                     name:
+ *                       type: string
+ *                       description: 部门名称
+ *                       example: "技术部"
+ *                     code:
+ *                       type: string
+ *                       description: 部门编码
+ *                       example: "TECH"
+ *                     parent_id:
+ *                       type: string
+ *                       format: uuid
+ *                       description: 父部门ID
+ *                       example: "123e4567-e89b-12d3-a456-426614174001"
+ *                     status:
+ *                       type: string
+ *                       enum: [ACTIVE, DISABLED, ARCHIVED]
+ *                       description: 部门状态
+ *                       example: "ACTIVE"
+ *                     description:
+ *                       type: string
+ *                       description: 部门描述
+ *                       example: "负责公司技术研发和运维"
+ *                     created_at:
+ *                       type: string
+ *                       format: date-time
+ *                       description: 创建时间
+ *                       example: "2024-03-20T10:00:00Z"
+ *                     updated_at:
+ *                       type: string
+ *                       format: date-time
+ *                       description: 更新时间
+ *                       example: "2024-03-20T10:00:00Z"
+ *                     deleted_at:
+ *                       type: string
+ *                       format: date-time
+ *                       description: 删除时间
+ *                       example: null
  */
 router.get('/departments/:department_id', auth, departmentController.getById);
 
@@ -809,7 +1311,7 @@ router.get('/departments/:department_id', auth, departmentController.getById);
  * /api/v1/departments/{department_id}:
  *   put:
  *     summary: 更新部门信息
- *     tags: [Departments]
+ *     tags: ['Departments']
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -843,7 +1345,7 @@ router.put('/departments/:department_id', auth, departmentController.update);
  * /api/v1/departments/{department_id}:
  *   delete:
  *     summary: 删除部门
- *     tags: [Departments]
+ *     tags: ['Departments']
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -869,7 +1371,7 @@ router.delete('/departments/:department_id', auth, departmentController.delete);
  * /api/v1/departments/{department_id}/members:
  *   get:
  *     summary: 获取部门成员
- *     tags: [Departments]
+ *     tags: ['Departments']
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -901,7 +1403,7 @@ router.get('/departments/:department_id/members', auth, departmentController.get
  * /api/v1/roles:
  *   post:
  *     summary: 创建角色
- *     tags: [Roles]
+ *     tags: ['Roles']
  *     security:
  *       - bearerAuth: []
  *     requestBody:
@@ -925,7 +1427,7 @@ router.post('/roles', auth, roleController.create);
  * /api/v1/roles:
  *   get:
  *     summary: 获取角色列表
- *     tags: [Roles]
+ *     tags: ['Roles']
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -952,7 +1454,7 @@ router.get('/roles', auth, roleController.list);
  * /api/v1/roles/{role_id}:
  *   get:
  *     summary: 获取角色详情
- *     tags: [Roles]
+ *     tags: ['Roles']
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -978,7 +1480,7 @@ router.get('/roles/:role_id', auth, roleController.getById);
  * /api/v1/roles/{role_id}:
  *   put:
  *     summary: 更新角色信息
- *     tags: [Roles]
+ *     tags: ['Roles']
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -1012,7 +1514,7 @@ router.put('/roles/:role_id', auth, roleController.update);
  * /api/v1/roles/{role_id}:
  *   delete:
  *     summary: 删除角色
- *     tags: [Roles]
+ *     tags: ['Roles']
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -1350,5 +1852,161 @@ router.post('/data-permissions/rules', auth, permissionController.createRule);
  *         description: 未授权
  */
 router.get('/data-permissions/rules', auth, permissionController.getRules);
+
+/**
+ * @swagger
+ * /api/v1/uploads:
+ *   post:
+ *     summary: 上传文件
+ *     tags: ['Upload']
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: type
+ *         schema:
+ *           type: string
+ *           enum: [image, video, document]
+ *           default: image
+ *         description: 文件类型（默认为 image）
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               file:
+ *                 type: string
+ *                 format: binary
+ *                 description: 文件（支持图片、视频、文档格式）
+ *     responses:
+ *       200:
+ *         description: 上传成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 code:
+ *                   type: integer
+ *                   example: 200
+ *                 message:
+ *                   type: string
+ *                   example: success
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                       format: uuid
+ *                       description: 文件ID
+ *                     type:
+ *                       type: string
+ *                       enum: [image, video, document]
+ *                       description: 文件类型
+ *                     url:
+ *                       type: string
+ *                       description: 文件访问URL
+ *                     thumbnail_url:
+ *                       type: string
+ *                       description: 缩略图URL（仅图片类型）
+ *                     size:
+ *                       type: integer
+ *                       description: 文件大小（字节）
+ *                     mime_type:
+ *                       type: string
+ *                       description: 文件MIME类型
+ *                     extension:
+ *                       type: string
+ *                       description: 文件扩展名
+ *       400:
+ *         description: 请求参数错误
+ *       401:
+ *         description: 未授权
+ *       500:
+ *         description: 服务器错误
+ * 
+ * /api/v1/uploads/images/{file_id}:
+ *   get:
+ *     summary: 获取图片
+ *     tags: ['Upload']
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: file_id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: 文件ID
+ *       - in: query
+ *         name: thumb
+ *         schema:
+ *           type: boolean
+ *         description: 是否返回缩略图
+ *       - in: query
+ *         name: width
+ *         schema:
+ *           type: integer
+ *         description: 缩略图宽度（默认300）
+ *       - in: query
+ *         name: height
+ *         schema:
+ *           type: integer
+ *         description: 缩略图高度（默认300）
+ *       - in: query
+ *         name: mode
+ *         schema:
+ *           type: string
+ *           enum: [cover, contain]
+ *           default: cover
+ *         description: "缩略图模式（cover-裁剪, contain-包含）"
+ *     responses:
+ *       200:
+ *         description: 图片内容
+ *         content:
+ *           image/webp:
+ *             schema:
+ *               type: string
+ *               format: binary
+ *       404:
+ *         description: 文件不存在
+ *       500:
+ *         description: 服务器错误
+ * 
+ * /api/v1/uploads/files/{file_id}:
+ *   get:
+ *     summary: 获取文件
+ *     tags: ['Upload']
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: file_id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: 文件ID
+ *     responses:
+ *       200:
+ *         description: 文件内容
+ *         content:
+ *           application/octet-stream:
+ *             schema:
+ *               type: string
+ *               format: binary
+ *       404:
+ *         description: 文件不存在
+ *       500:
+ *         description: 服务器错误
+ */
+
+// 文件上传路由
+router.post('/uploads', auth, uploadController.uploadFile);
+router.get('/uploads/images/:file_id', auth, uploadController.getImage);
+router.get('/uploads/files/:file_id', auth, uploadController.getFile);
 
 module.exports = router; 

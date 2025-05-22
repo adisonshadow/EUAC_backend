@@ -1,7 +1,8 @@
 const { Department } = require('../models');
 const User = require('../models/user');
-const { Op } = require('sequelize');
+const { Op, Sequelize } = require('sequelize');
 const { validate: isUuid } = require('uuid');
+const { DepartmentClosure } = require('../models');
 
 class DepartmentController {
   // 创建部门
@@ -51,20 +52,37 @@ class DepartmentController {
   // 获取部门列表
   static async list(ctx) {
     try {
-      const { page = 1, size = 10, name, code, status } = ctx.query;
-      const offset = (page - 1) * size;
-
+      const { page, size, name, code, status } = ctx.query;
       const where = {};
       if (name) where.name = { [Op.like]: `%${name}%` };
       if (code) where.code = { [Op.like]: `%${code}%` };
       if (status) where.status = status;
 
-      const { count, rows } = await Department.findAndCountAll({
+      // 构建查询选项
+      const queryOptions = {
         where,
-        offset,
-        limit: parseInt(size),
-        order: [['created_at', 'DESC']]
-      });
+        order: [['created_at', 'DESC']],
+        attributes: [
+          'department_id',
+          'name',
+          'code',
+          'parent_id',
+          'status',
+          'description',
+          'created_at',
+          'updated_at',
+          'deleted_at'
+        ]
+      };
+
+      // 如果提供了分页参数，则添加分页
+      if (page && size) {
+        const offset = (parseInt(page) - 1) * parseInt(size);
+        queryOptions.offset = offset;
+        queryOptions.limit = parseInt(size);
+      }
+
+      const { count, rows } = await Department.findAndCountAll(queryOptions);
 
       ctx.body = {
         code: 200,
@@ -72,8 +90,10 @@ class DepartmentController {
         data: {
           total: count,
           items: rows,
-          current: parseInt(page),
-          size: parseInt(size)
+          ...(page && size ? {
+            current: parseInt(page),
+            size: parseInt(size)
+          } : {})
         }
       };
     } catch (error) {

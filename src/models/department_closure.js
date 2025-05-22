@@ -5,7 +5,7 @@ class DepartmentClosure extends Model {}
 module.exports = (sequelize) => {
   DepartmentClosure.init({
     ancestor_id: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.UUID,
       primaryKey: true,
       references: {
         model: 'departments',
@@ -14,7 +14,7 @@ module.exports = (sequelize) => {
       comment: '祖先部门ID'
     },
     descendant_id: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.UUID,
       primaryKey: true,
       references: {
         model: 'departments',

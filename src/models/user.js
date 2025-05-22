@@ -91,7 +91,7 @@ module.exports = (sequelize) => {
       comment: '用户电话'
     },
     department_id: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.UUID,
       allowNull: true,
       field: 'department_id',
       comment: '部门ID'

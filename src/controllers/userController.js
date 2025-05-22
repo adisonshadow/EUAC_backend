@@ -219,15 +219,17 @@ class UserController {
   // 获取用户列表
   static async list(ctx) {
     try {
-      const { page = 1, size = 10, username, email, phone, status, department_id } = ctx.query;
+      const { page = 1, size = 30, username, name, email, phone, status, gender, department_id } = ctx.query;
       const offset = (page - 1) * size;
       
       // 构建查询条件
       const where = {};
       if (username) where.username = { [Op.like]: `%${username}%` };
+      if (name) where.name = { [Op.like]: `%${name}%` };
       if (email) where.email = { [Op.like]: `%${email}%` };
       if (phone) where.phone = { [Op.like]: `%${phone}%` };
       if (status) where.status = status;
+      if (gender) where.gender = gender;
       if (department_id) where.department_id = department_id;
 
       // 查询用户列表
@@ -236,6 +238,9 @@ class UserController {
         attributes: [
           'user_id',
           'username',
+          'name',
+          'avatar',
+          'gender',
           'email',
           'phone',
           'status',
@@ -480,7 +485,8 @@ class UserController {
         data: {
           token: token,
           refresh_token: refreshToken,
-          expires_in: config.jwt.expiresIn
+          expires_in: config.jwt.expiresIn,
+          user_id: user.user_id
         }
       };
     } catch (error) {
@@ -884,6 +890,60 @@ class UserController {
       };
     } catch (error) {
       logger.error('Error getting user details', {
+        name: error.name,
+        message: error.message,
+        stack: error.stack
+      });
+
+      ctx.status = 500;
+      ctx.body = {
+        code: 500,
+        message: '服务器内部错误',
+        data: null
+      };
+    }
+  }
+
+  // 检查用户登录状态
+  static async checkAuth(ctx) {
+    try {
+      // 从 ctx.state.user 中获取用户信息（由 auth 中间件注入）
+      const user = await User.findOne({
+        where: { 
+          user_id: ctx.state.user.user_id,
+          status: 'ACTIVE'
+        },
+        attributes: [
+          'user_id',
+          'username',
+          'name',
+          'avatar',
+          'gender',
+          'email',
+          'phone',
+          'status',
+          'department_id'
+        ]
+      });
+
+      if (!user) {
+        ctx.status = 401;
+        ctx.body = {
+          code: 401,
+          message: '用户不存在或已被禁用',
+          data: null
+        };
+        return;
+      }
+
+      ctx.status = 200;
+      ctx.body = {
+        code: 200,
+        message: 'success',
+        data: user
+      };
+    } catch (error) {
+      logger.error('Error checking auth status', {
         name: error.name,
         message: error.message,
         stack: error.stack

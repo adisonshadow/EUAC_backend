@@ -68,7 +68,21 @@ SELECT root_id, department_id, depth
 FROM dept_hierarchy;
 
 -- 生成100个测试用户
-INSERT INTO uac.users 
+INSERT INTO uac.users (
+  user_id,
+  username,
+  password_hash,
+  name,
+  avatar,
+  gender,
+  email,
+  phone,
+  status,
+  department_id,
+  created_at,
+  updated_at,
+  deleted_at
+)
 SELECT 
   gen_random_uuid(),
   'user_'||s.id,

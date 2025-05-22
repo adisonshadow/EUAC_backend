@@ -1,5 +1,7 @@
 const Koa = require('koa');
+const Router = require('koa-router');
 const bodyParser = require('koa-bodyparser');
+const multer = require('koa-multer');
 const cors = require('@koa/cors');
 const config = require('./config');
 const logger = require('./utils/logger');
@@ -18,10 +20,31 @@ app.use(errorHandler);
 app.use(cors());
 app.use(bodyParser());
 
+// 文件上传中间件配置
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, 'uploads/') // 确保这个目录存在
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9)
+    cb(null, uniqueSuffix + '-' + file.originalname)
+  }
+});
+
+const upload = multer({ 
+  storage: storage,
+  limits: {
+    fileSize: 5 * 1024 * 1024 // 5MB
+  }
+});
+
+// 将 multer 中间件添加到路由中
+app.use(upload.single('file'));
+
 // Swagger UI 配置
 app.use(
   koaSwagger({
-    routePrefix: '/swagger', // Swagger UI 的访问路径
+    routePrefix: '/swagger', // 保持原来的路径
     swaggerOptions: {
       spec: swaggerSpec,
     },
@@ -30,7 +53,7 @@ app.use(
 
 // 添加 OpenAPI JSON 路由
 app.use(async (ctx, next) => {
-  if (ctx.path === '/swagger.json') {
+  if (ctx.path === '/swagger.json') { // 保持原来的路径
     ctx.type = 'application/json';
     ctx.body = swaggerSpec;
     return;
@@ -61,7 +84,7 @@ app.use(async (ctx, next) => {
       message: error.message,
       stack: error.stack
     });
-    throw error; // 重新抛出错误，让错误处理中间件处理
+    throw error;
   }
 });
 
