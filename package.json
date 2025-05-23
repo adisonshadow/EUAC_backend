@@ -14,7 +14,8 @@
     "db:vacuum": "bash scripts/db-maintenance.sh VACUUM",
     "db:analyze": "bash scripts/db-maintenance.sh ANALYZE",
     "db:reindex": "bash scripts/db-maintenance.sh REINDEX",
-    "db:maintenance:all": "bash scripts/db-maintenance.sh ALL"
+    "db:maintenance:all": "bash scripts/db-maintenance.sh ALL",
+    "swagger": "node scripts/generate-swagger.js"
   },
   "dependencies": {
     "@koa/cors": "^5.0.0",

@@ -54,62 +54,99 @@ exports.uploadFile = async (ctx) => {
     const file = ctx.req.file;
     if (!file) {
       ctx.status = 400;
-      ctx.body = { error: '没有上传文件' };
+      ctx.body = { 
+        code: 400,
+        message: '没有上传文件',
+        data: null
+      };
       return;
     }
 
     const fileType = ctx.query.type || config.upload.defaultType;
-    const typeConfig = config.upload.types[fileType];
+    logger.debug('文件上传请求', { fileType, originalName: file.originalname, mimetype: file.mimetype, size: file.size });
 
+    const typeConfig = config.upload.types[fileType];
     if (!typeConfig) {
       ctx.status = 400;
-      ctx.body = { error: '不支持的文件类型' };
+      ctx.body = { 
+        code: 400,
+        message: '不支持的文件类型',
+        data: null
+      };
       return;
     }
 
     // 检查文件类型
     if (!typeConfig.mimeTypes.includes(file.mimetype)) {
       ctx.status = 400;
-      ctx.body = { error: '不支持的文件类型' };
+      ctx.body = { 
+        code: 400,
+        message: `不支持的文件类型，允许的类型：${typeConfig.mimeTypes.join(', ')}`,
+        data: null
+      };
       return;
     }
 
     // 检查文件大小
     if (file.size > typeConfig.maxSize) {
       ctx.status = 400;
-      ctx.body = { error: '文件大小超过限制' };
+      ctx.body = { 
+        code: 400,
+        message: `文件大小超过限制，最大允许：${typeConfig.maxSize / 1024 / 1024}MB`,
+        data: null
+      };
       return;
     }
 
     // 生成文件ID
     const fileId = uuidv4();
-    const fileExt = path.extname(file.originalname);
+    const fileExt = fileType === 'image' ? '.webp' : path.extname(file.originalname);
     const fileName = `${fileId}${fileExt}`;
     const filePath = path.join(uploadDir, fileName);
 
-    // 移动文件到目标目录
-    fs.renameSync(file.path, filePath);
-
-    // 如果是图片类型，生成缩略图
-    let thumbnailPath = null;
+    // 处理文件
     if (fileType === 'image') {
-      thumbnailPath = await generateThumbnail(filePath);
+      // 图片转webp
+      await sharp(file.path)
+        .webp({ quality: 80 })
+        .toFile(filePath);
+      // 删除原始文件
+      fs.unlinkSync(file.path);
+    } else {
+      // 非图片文件直接移动
+      fs.renameSync(file.path, filePath);
     }
 
     ctx.status = 200;
     ctx.body = {
-      id: fileId,
-      type: fileType,
-      url: `${config.api.baseUrl}/api/v1/uploads/${fileType === 'image' ? 'images' : 'files'}/${fileId}`,
-      thumbnail_url: thumbnailPath ? `${config.api.baseUrl}/api/v1/uploads/images/${fileId}?thumb=true` : null,
-      size: file.size,
-      mime_type: file.mimetype,
-      extension: fileExt
+      code: 200,
+      message: 'success',
+      data: {
+        id: fileId,
+        type: fileType,
+        url: `${config.api.host}:${config.api.port}/api/v1/uploads/${fileType === 'image' ? 'images' : 'files'}/${fileId}`,
+        original_name: file.originalname,
+        size: file.size,
+        mime_type: file.mimetype,
+        extension: fileExt
+      }
     };
   } catch (error) {
-    logger.error('上传文件失败', { error: error.message });
+    logger.error('上传文件失败', { 
+      error: error.message,
+      stack: error.stack,
+      file: ctx.req.file ? {
+        originalname: ctx.req.file.originalname,
+        mimetype: ctx.req.file.mimetype,
+        size: ctx.req.file.size
+      } : null
+    });
     ctx.status = 500;
-    ctx.body = { error: '上传文件失败' };
+    ctx.body = { 
+      code: 500,
+      message: '上传文件失败',
+      data: null
+    };
   }
 };
 
@@ -117,7 +154,6 @@ exports.uploadFile = async (ctx) => {
 exports.getImage = async (ctx) => {
   try {
     const { file_id } = ctx.params;
-    const { thumb, width, height, mode } = ctx.query;
     
     // 查找文件
     const files = fs.readdirSync(uploadDir);
@@ -131,24 +167,8 @@ exports.getImage = async (ctx) => {
 
     const filePath = path.join(uploadDir, file);
     
-    // 如果需要缩略图
-    if (thumb === 'true') {
-      const thumbnailPath = await generateThumbnail(
-        filePath,
-        parseInt(width) || 300,
-        parseInt(height) || 300,
-        mode || 'cover'
-      );
-      
-      if (thumbnailPath) {
-        ctx.type = 'image/webp';
-        ctx.body = fs.createReadStream(thumbnailPath);
-        return;
-      }
-    }
-
-    // 返回原图
-    ctx.type = path.extname(file).slice(1);
+    // 返回图片
+    ctx.type = 'image/webp';
     ctx.body = fs.createReadStream(filePath);
   } catch (error) {
     logger.error('获取图片失败', { error: error.message });

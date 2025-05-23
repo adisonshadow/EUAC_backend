@@ -6,6 +6,7 @@ const roleController = require('../controllers/roleController');
 const auth = require('../middlewares/auth');
 const captchaController = require('../controllers/captchaController');
 const uploadController = require('../controllers/uploadController');
+const config = require('../config');
 
 const router = new Router({
   prefix: '/api/v1'
@@ -425,6 +426,98 @@ router.post('/auth/refresh', userController.refreshToken);
  *                   nullable: true
  */
 router.post('/auth/logout', auth, userController.logout);
+
+/**
+ * @swagger
+ * /api/v1/auth/check:
+ *   get:
+ *     summary: 检查用户登录状态
+ *     tags: ['Auth']
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: 用户已登录
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 code:
+ *                   type: integer
+ *                   example: 200
+ *                 message:
+ *                   type: string
+ *                   example: success
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     user_id:
+ *                       type: string
+ *                       format: uuid
+ *                       description: 用户ID
+ *                     username:
+ *                       type: string
+ *                       description: 用户名
+ *                     name:
+ *                       type: string
+ *                       description: 用户姓名
+ *                     avatar:
+ *                       type: string
+ *                       description: 用户头像URL
+ *                     gender:
+ *                       type: string
+ *                       enum: [MALE, FEMALE, OTHER]
+ *                       description: 用户性别
+ *                     email:
+ *                       type: string
+ *                       format: email
+ *                       description: 电子邮箱
+ *                     phone:
+ *                       type: string
+ *                       description: 电话号码
+ *                     status:
+ *                       type: string
+ *                       enum: [ACTIVE, DISABLED, LOCKED, ARCHIVED]
+ *                       description: 用户状态
+ *                     department_id:
+ *                       type: string
+ *                       format: uuid
+ *                       description: 部门ID
+ *       401:
+ *         description: 未授权或用户不存在
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 code:
+ *                   type: integer
+ *                   example: 401
+ *                 message:
+ *                   type: string
+ *                   example: 用户不存在或已被禁用
+ *                 data:
+ *                   type: object
+ *                   nullable: true
+ *       500:
+ *         description: 服务器内部错误
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 code:
+ *                   type: integer
+ *                   example: 500
+ *                 message:
+ *                   type: string
+ *                   example: 服务器内部错误
+ *                 data:
+ *                   type: object
+ *                   nullable: true
+ */
+router.get('/auth/check', auth, userController.checkAuth);
 
 /**
  * @swagger
@@ -1858,7 +1951,7 @@ router.get('/data-permissions/rules', auth, permissionController.getRules);
  * /api/v1/uploads:
  *   post:
  *     summary: 上传文件
- *     tags: ['Upload']
+ *     tags: ['Uploads']
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -1908,9 +2001,9 @@ router.get('/data-permissions/rules', auth, permissionController.getRules);
  *                     url:
  *                       type: string
  *                       description: 文件访问URL
- *                     thumbnail_url:
+ *                     original_name:
  *                       type: string
- *                       description: 缩略图URL（仅图片类型）
+ *                       description: 原始文件名
  *                     size:
  *                       type: integer
  *                       description: 文件大小（字节）
@@ -1930,16 +2023,14 @@ router.get('/data-permissions/rules', auth, permissionController.getRules);
  * /api/v1/uploads/images/{file_id}:
  *   get:
  *     summary: 获取图片
- *     tags: ['Upload']
- *     security:
- *       - bearerAuth: []
+ *     description: 根据文件ID获取图片，如果配置了 needAuth=false，则无需认证
+ *     tags: ['Uploads']
  *     parameters:
  *       - in: path
  *         name: file_id
  *         required: true
  *         schema:
  *           type: string
- *           format: uuid
  *         description: 文件ID
  *       - in: query
  *         name: thumb
@@ -1950,12 +2041,14 @@ router.get('/data-permissions/rules', auth, permissionController.getRules);
  *         name: width
  *         schema:
  *           type: integer
- *         description: 缩略图宽度（默认300）
+ *           default: 300
+ *         description: 缩略图宽度
  *       - in: query
  *         name: height
  *         schema:
  *           type: integer
- *         description: 缩略图高度（默认300）
+ *           default: 300
+ *         description: 缩略图高度
  *       - in: query
  *         name: mode
  *         schema:
@@ -1965,7 +2058,7 @@ router.get('/data-permissions/rules', auth, permissionController.getRules);
  *         description: "缩略图模式（cover-裁剪, contain-包含）"
  *     responses:
  *       200:
- *         description: 图片内容
+ *         description: 成功获取图片
  *         content:
  *           image/webp:
  *             schema:
@@ -1979,20 +2072,18 @@ router.get('/data-permissions/rules', auth, permissionController.getRules);
  * /api/v1/uploads/files/{file_id}:
  *   get:
  *     summary: 获取文件
- *     tags: ['Upload']
- *     security:
- *       - bearerAuth: []
+ *     description: 根据文件ID获取文件，如果配置了 needAuth=false，则无需认证
+ *     tags: ['Uploads']
  *     parameters:
  *       - in: path
  *         name: file_id
  *         required: true
  *         schema:
  *           type: string
- *           format: uuid
  *         description: 文件ID
  *     responses:
  *       200:
- *         description: 文件内容
+ *         description: 成功获取文件
  *         content:
  *           application/octet-stream:
  *             schema:
@@ -2006,7 +2097,25 @@ router.get('/data-permissions/rules', auth, permissionController.getRules);
 
 // 文件上传路由
 router.post('/uploads', auth, uploadController.uploadFile);
-router.get('/uploads/images/:file_id', auth, uploadController.getImage);
-router.get('/uploads/files/:file_id', auth, uploadController.getFile);
+
+// 获取图片
+router.get('/uploads/images/:file_id', async (ctx, next) => {
+  const fileType = 'image';
+  if (config.upload.types[fileType].needAuth) {
+    await auth(ctx, next);
+  } else {
+    await next();
+  }
+}, uploadController.getImage);
+
+// 获取文件
+router.get('/uploads/files/:file_id', async (ctx, next) => {
+  const fileType = 'document';
+  if (config.upload.types[fileType].needAuth) {
+    await auth(ctx, next);
+  } else {
+    await next();
+  }
+}, uploadController.getFile);
 
 module.exports = router; 

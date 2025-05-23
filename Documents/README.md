@@ -1,5 +1,11 @@
 ## 简介
-### 关于 UAC
+### 关于 UAC 
+
+UAC 由 ( IAM + EMM ) 组成
+
+IAM 系统是 Identity and Access Management（身份识别与访问管理），系统用于管理数字身份、控制用户对资源访问权限的技术框架，核心目标是确保合适的用户在合适的时间，以合适的权限访问合适的资源，同时保障系统和数据的安全性。
+
+EMM 系统是 （企业Media管理），系统用于管理企业的图片、文档、视频等数字化生产资料。
 
 **企业级身份与权限管理解决方案**  
 为企业/组织提供安全可控的用户管理体系与智能权限中枢，保障业务数据安全的同时，显著提升管理效率。
@@ -56,82 +62,8 @@
    - 例如：特定时间段访问、特定IP访问等
    - 通过JSON格式的规则配置实现灵活控制
 
-**API实现方式**  
-1. 权限检查接口
-```bash
-# 检查用户权限
-POST /api/v1/permissions/check
-Content-Type: application/json
-Authorization: Bearer <token>
-
-{
-  "user_id": "用户ID",
-  "resource_type": "资源类型",
-  "action": "操作类型"
-}
-
-# 响应示例
-{
-  "code": 200,
-  "message": "success",
-  "data": {
-    "has_permission": true,
-    "conditions": {
-      "department_id": ["部门ID1", "部门ID2"],
-      "time_range": {
-        "start": "09:00",
-        "end": "18:00"
-      }
-    }
-  }
-}
-```
-
-2. 数据权限规则管理
-```bash
-# 创建数据权限规则
-POST /api/v1/data-permissions/rules
-Content-Type: application/json
-Authorization: Bearer <token>
-
-{
-  "role_id": "角色ID",
-  "resource_type": "资源类型",
-  "conditions": {
-    "field": "department_id",
-    "operator": "in",
-    "value": ["部门ID1", "部门ID2"]
-  }
-}
-
-# 获取数据权限规则
-GET /api/v1/data-permissions/rules?role_id=<角色ID>&resource_type=<资源类型>
-Authorization: Bearer <token>
-```
-
-3. 用户权限查询
-```bash
-# 获取用户所有权限
-GET /api/v1/permissions/user/:user_id
-Authorization: Bearer <token>
-
-# 响应示例
-{
-  "code": 200,
-  "message": "success",
-  "data": {
-    "permissions": [
-      {
-        "resource_type": "user",
-        "actions": ["read", "update"],
-        "conditions": {
-          "department_id": ["部门ID1"]
-        }
-      }
-    ]
-  }
-}
-```
+**API使用说明**  
+  前端/APP开发人员请参见 [API使用说明](./API使用说明.md)
 
 **审计与合规保障**  
 - 权限变更全程留痕，支持操作记录追溯与定期合规审查  
@@ -156,88 +88,18 @@ Authorization: Bearer <token>
 通过聚焦业务场景的优化表述，能更直观理解产品如何解决实际管理痛点，同时弱化了技术实现细节，强化商业价值呈现。
 
 ### 引用链接
-1.[CRM系统的用户管理和权限控制功能咋样设计和实现? - 简道云官网](https://www.jiandaoyun.com/blog/article/1795644/)
-2.[一套管理软件需要设计哪些功能 | 零代码企业数字化知识站 - 简道云官网](https://www.jiandaoyun.com/blog/article/2282360/)
-3.[功能介绍、用户权限、数据权限、系统管理 - JeeSite](https://jeesite.com/docs/function/)
-4.[账号管理项目有哪些方面 - Worktile](https://worktile.com/kb/p/3371751)
-5.[一文搞定权限管理!授权、鉴权超详细解析 - CSDN博客](https://blog.csdn.net/weixin_43314519/article/details/118365327)
-6.[业务系统通用功能包括:企业高效运营的六大核心要素 - 伙伴云](https://www.huoban.com/yx-jiaocheng/PEQnWww6dwX1xbZq.html)
-7.[企业权限管理项目有哪些 - Worktile](https://worktile.com/kb/p/3397955)
-8.[权限控制入门教程:轻松掌握用户权限管理 - 慕课网](https://www.imooc.com/article/374890)
-9.[记者实测 | 智能体按下"加速键" 大厂争当MCP"应用商店" - 东方财富网](https://finance.eastmoney.com/a/202504303394902161.html)
-10.[用友erp软件的系统管理功能 - 简道云官网](https://www.jiandaoyun.com/blog/article/1010651/)
-11.[erp 安全组用户管理功能有哪些 ERP安全组用户管理核心功能解析 - 简道云官网](https://www.jiandaoyun.com/blog/article/1848945/)
-12.[客户权限如何管理 - Worktile](https://worktile.com/kb/p/3725634)
-13.[项目中的用户管理包括哪些 - PingCode](https://docs.pingcode.com/ask/ask-ask/439612.html)
-14.[后台管理有哪些项目 - "基石协作"织信Informat官网](https://www.informat.cn/qa/224037)
-15.[028.[转] 认证、授权、鉴权和权限控制 - 博客园](https://www.cnblogs.com/badboyh2o/p/11068779.html)
-16.[生活服务类平台产品研发-账户系统(三户) - 博客园](https://www.cnblogs.com/winyh/p/11355845.html)
-17.[后台管理有哪些项目 - PingCode](https://docs.pingcode.com/ask/ask-ask/405011.html)
-18.[erp中角色管理包括哪些 - 用友畅捷通](https://www.chanjet.com/lker/652f3567e4b0fdcfa8d9306c.html?c=detail)
-19.[设备管理软件中的权限管理与访问控制功能介绍 - 领值设备维护管理系统](https://baijiahao.baidu.com/s?id=1802977306776066199&wfr=spider&for=pc)
-20.[ERP的用户管理 ERP用户管理 必备技能:用户画像分析详解 - 用友好业财官网](https://hyc.chanjet.com/hyczg/0d9c1c1aba6fe.html)
-21.[erp用户管理功能 - 用友畅捷通](https://www.chanjet.com/lker/652cc59ee4b0fdcff88b4a39.html)
-22.[企业权限管理项目包括哪些内容 - PingCode](https://docs.pingcode.com/ask/432122.html)
-23.[系统用户管理系统的介绍与优势 - 阿里云创新中心](http://startup.aliyun.com/info/1072463.html)
-24.[用户管理项目怎么做的 - Worktile](https://worktile.com/kb/p/3799435)
+   本项目引用参考的[链接](./引用链接.md)
 
 ## 安装
 1. 修改配置文件 ./config.json
-
-   配置文件包含以下主要配置项：
-   - **postgresql**: 数据库连接配置
-     - `host`: 数据库主机地址，默认为 localhost
-     - `port`: 数据库端口，默认为 15432
-     - `database`: 数据库名称，默认为 UAC
-     - `user`: 数据库用户名，默认为 yoyo
-     - `password`: 数据库密码，默认为 123456
-     - `max_connections`: 最大连接数，默认为 20
-     - `idle_timeout`: 空闲连接超时时间（毫秒），默认为 30000
-     - `connection_timeout`: 连接超时时间（毫秒），默认为 2000
-     - `ssl`: 是否启用 SSL 连接，默认为 false
-   - **api**: API 服务配置
-     - `port`: API 服务端口，默认为 3000
-     - `host`: API 服务主机地址，默认为 localhost
-     - `cors`: 跨域配置
-       - `origin`: 允许的源地址，默认为 ["http://localhost:3000", "http://localhost:8080"]
-       - `methods`: 允许的 HTTP 方法，默认为 ["GET", "POST", "PUT", "DELETE", "PATCH"]
-       - `allowedHeaders`: 允许的请求头，默认为 ["Content-Type", "Authorization"]
-       - `credentials`: 是否允许携带凭证，默认为 true
-       - `maxAge`: 预检请求缓存时间（秒），默认为 86400
-     - `rateLimit`: 请求限流配置
-       - `windowMs`: 时间窗口（毫秒），默认为 900000
-       - `max`: 最大请求数，默认为 100
-     - `security`: 安全配置
-       - `jwtSecret`: JWT 密钥，默认为 my-jwt-secret-key
-       - `jwtExpiresIn`: JWT 过期时间，默认为 24h
-       - `bcryptSaltRounds`: bcrypt 加密轮数，默认为 10
-   - **logging**: 日志配置
-     - `level`: 日志级别，默认为 info
-       - 可选值: error, warn, info, verbose, debug, silly
-       - 生产环境建议使用 info 或 warn 级别
-     - `format`: 日志格式，默认为 json
-       - 可选值: json, simple
-       - json格式适合ELK等日志系统收集
-     - `file`: 日志文件路径，默认为 logs/app.log
-       - 日志文件将自动按日期和大小轮转
-       - 确保logs目录有写入权限
-     - `rotation`: 日志轮转配置
-       - `maxSize`: 单个日志文件最大大小，默认为 20m
-         - 支持单位: k/m/g (如 100k, 20m, 1g)
-       - `maxFiles`: 普通日志保留天数，默认为 14d
-         - 支持单位: d (天) 或 h (小时)
-       - `zippedArchive`: 是否压缩旧日志，默认为 true
-         - 压缩可节省磁盘空间
-       - `errorMaxFiles`: 错误日志保留天数，默认为 30d
-       - `exceptionsMaxFiles`: 异常日志保留天数，默认为 30d
-       - `rejectionsMaxFiles`: Promise拒绝日志保留天数，默认为 30d
+   配置内容包括：数据库、API 配置、文件上传配置和日志配置。
+   详细的配置说明请参考 [配置文件说明](./config.json.md)
 
 2. 安装数据库
 ```bash
-npm run 
+npm run init-db
 
 # 在安装结束后，会初始化一个超级管理员 admin，验证
-
 curl -X POST http://localhost:3000/api/v1/auth/login -H "Content-Type: application/json" -d '{"username":"admin","password":"123456"}'
 
 # 请在初始化结束后删除超级管理员
@@ -246,28 +108,7 @@ curl -X POST http://localhost:3000/api/v1/auth/login -H "Content-Type: applicati
 ```
 
 ### 日志使用说明
-维护日志将保存在 `logs` 目录下，文件名格式为 `db-maintenance-YYYYMMDD_HHMMSS.log`。  
-如遇权限问题，脚本会输出警告信息，请检查数据库用户权限。
-
-1. **日志级别调整**
-   - 开发环境可设置为debug或verbose级别查看详细日志
-   - 生产环境建议使用info或warn级别
-   - 临时调整日志级别(无需重启服务):
-     ```bash
-     curl -X PATCH http://localhost:3000/api/v1/config \
-       -H "Content-Type: application/json" \
-       -d '{"logging":{"level":"debug"}}'
-     ```
-
-2. **日志文件位置**
-   - 默认日志路径: ./logs/app.log
-   - 错误日志: ./logs/app-error.log
-   - 异常日志: ./logs/app-exceptions.log
-
-3. **常见问题**
-   - **日志不生成**: 检查logs目录权限(需755以上)
-   - **日志文件过大**: 调整maxSize参数(如50m)
-   - **日志保留时间**: 根据磁盘空间调整maxFiles参数
+本项目配置并使用日志系统，[详细说明](./日志使用说明.md)
 
 2. 启动
 ```bash

@@ -3,3 +3,5 @@ logs/
 yarn-error.log
 .DS_Store
 src/resource/
+uploads/*
+thumbsCache/*
