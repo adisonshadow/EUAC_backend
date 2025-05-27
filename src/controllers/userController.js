@@ -234,11 +234,12 @@ class UserController {
   // 获取用户列表
   static async list(ctx) {
     try {
-      const { page = 1, size = 30, username, name, email, phone, status, gender, department_id } = ctx.query;
+      const { page = 1, size = 30, username, name, email, phone, status, gender, department_id, user_id } = ctx.query;
       const offset = (page - 1) * size;
       
       // 构建查询条件
       const where = {};
+      if (user_id) where.user_id = user_id;
       if (username) where.username = { [Op.like]: `%${username}%` };
       if (name) where.name = { [Op.like]: `%${name}%` };
       if (email) where.email = { [Op.like]: `%${email}%` };
@@ -247,8 +248,8 @@ class UserController {
       if (gender) where.gender = gender;
       if (department_id) where.department_id = department_id;
 
-      // 查询用户列表
-      const { count, rows } = await User.scope('active').findAndCountAll({
+      // 查询用户列表，使用 unscope 移除所有默认的 scope
+      const { count, rows } = await User.unscoped().findAndCountAll({
         where,
         attributes: [
           'user_id',

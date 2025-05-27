@@ -942,7 +942,7 @@
       },
       "get": {
         "summary": "获取用户列表",
-        "description": "获取用户列表，支持分页和条件筛选。需要在请求头中携带 Bearer Token。\n\n请求头格式：\n```\nAuthorization: Bearer <your_token>\n```\n\n支持的查询参数：\n- page: 页码，默认 1\n- size: 每页数量，默认 30\n- username: 用户名（支持模糊搜索）\n- name: 用户姓名（支持模糊搜索）\n- email: 邮箱（支持模糊搜索）\n- phone: 电话（支持模糊搜索）\n- status: 用户状态（精确匹配）\n- gender: 性别（精确匹配）\n- department_id: 部门ID（精确匹配）\n",
+        "description": "获取用户列表，支持分页和条件筛选。需要在请求头中携带 Bearer Token。\n\n请求头格式：\n```\nAuthorization: Bearer <your_token>\n```\n\n支持的查询参数：\n- page: 页码，默认 1\n- size: 每页数量，默认 30\n- user_id: 用户ID（精确匹配）\n- username: 用户名（支持模糊搜索）\n- name: 用户姓名（支持模糊搜索）\n- email: 邮箱（支持模糊搜索）\n- phone: 电话（支持模糊搜索）\n- status: 用户状态（精确匹配，不传则返回所有状态）\n- gender: 性别（精确匹配）\n- department_id: 部门ID（精确匹配）\n",
         "tags": [
           "Users"
         ],
@@ -967,6 +967,15 @@
               "type": "integer"
             },
             "description": "每页数量，默认 30"
+          },
+          {
+            "in": "query",
+            "name": "user_id",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "用户ID（精确匹配）"
           },
           {
             "in": "query",
@@ -1012,7 +1021,7 @@
                 "ARCHIVED"
               ]
             },
-            "description": "用户状态（精确匹配）"
+            "description": "用户状态（精确匹配，不传则返回所有状态）"
           },
           {
             "in": "query",
