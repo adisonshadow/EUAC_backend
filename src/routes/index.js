@@ -996,7 +996,34 @@ router.get('/users/:user_id', auth, userController.getById);
  *                   type: string
  *                   example: success
  *                 data:
- *                   $ref: '#/components/schemas/User'
+ *                   type: object
+ *                   properties:
+ *                     user_id:
+ *                       type: string
+ *                       format: uuid
+ *                       description: 用户ID
+ *                     username:
+ *                       type: string
+ *                       description: 用户名
+ *                     email:
+ *                       type: string
+ *                       format: email
+ *                       description: 电子邮箱
+ *                     phone:
+ *                       type: string
+ *                       description: 电话号码
+ *                     status:
+ *                       type: string
+ *                       enum: [ACTIVE, DISABLED, LOCKED, ARCHIVED]
+ *                       description: 用户状态
+ *                     department_id:
+ *                       type: string
+ *                       format: uuid
+ *                       description: 部门ID
+ *                     updated_at:
+ *                       type: string
+ *                       format: date-time
+ *                       description: 更新时间
  *       400:
  *         $ref: '#/components/responses/400'
  *       401:
@@ -1075,6 +1102,63 @@ router.delete('/users/:user_id', auth, userController.delete);
  *         description: 用户不存在
  */
 router.post('/users/:user_id/restore', auth, userController.restore);
+
+/**
+ * @swagger
+ * /api/v1/users/{user_id}/reset-password:
+ *   post:
+ *     summary: 重置用户密码
+ *     tags: ['Users']
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: user_id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: 用户ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - new_password
+ *             properties:
+ *               new_password:
+ *                 type: string
+ *                 format: password
+ *                 description: 新密码
+ *     responses:
+ *       200:
+ *         description: 密码重置成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 code:
+ *                   type: integer
+ *                   example: 200
+ *                 message:
+ *                   type: string
+ *                   example: 密码重置成功
+ *                 data:
+ *                   type: object
+ *                   nullable: true
+ *       400:
+ *         $ref: '#/components/responses/400'
+ *       401:
+ *         $ref: '#/components/responses/401'
+ *       404:
+ *         $ref: '#/components/responses/404'
+ *       500:
+ *         $ref: '#/components/responses/500'
+ */
+router.post('/users/:user_id/reset-password', auth, userController.resetPassword);
 
 // 部门相关路由
 /**

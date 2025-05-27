@@ -71,6 +71,9 @@ class UserController {
       const user = await User.create({
         username: ctx.request.body.username,
         password_hash: hashedPassword,
+        name: ctx.request.body.name,
+        avatar: ctx.request.body.avatar,
+        gender: ctx.request.body.gender,
         email: ctx.request.body.email,
         phone: ctx.request.body.phone,
         department_id: ctx.request.body.department_id,
@@ -86,6 +89,9 @@ class UserController {
         data: {
           user_id: user.user_id,
           username: user.username,
+          name: user.name,
+          avatar: user.avatar,
+          gender: user.gender,
           email: user.email,
           phone: user.phone,
           status: user.status,
@@ -141,6 +147,9 @@ class UserController {
 
       // 记录旧数据用于日志
       const oldData = {
+        name: user.name,
+        avatar: user.avatar,
+        gender: user.gender,
         email: user.email,
         phone: user.phone,
         status: user.status
@@ -159,6 +168,9 @@ class UserController {
         data: {
           user_id: updatedUser.user_id,
           username: updatedUser.username,
+          name: updatedUser.name,
+          avatar: updatedUser.avatar,
+          gender: updatedUser.gender,
           email: updatedUser.email,
           phone: updatedUser.phone,
           status: updatedUser.status,
@@ -176,6 +188,9 @@ class UserController {
           resource_id: user_id,
           old_data: oldData,
           new_data: {
+            name: updatedUser.name,
+            avatar: updatedUser.avatar,
+            gender: updatedUser.gender,
             email: updatedUser.email,
             phone: updatedUser.phone,
             status: updatedUser.status
@@ -248,7 +263,7 @@ class UserController {
           'created_at',
           'updated_at'
         ],
-        order: [['created_at', 'DESC']],
+        order: [['updated_at', 'DESC']],
         offset: parseInt(offset),
         limit: parseInt(size)
       });
@@ -944,6 +959,88 @@ class UserController {
       };
     } catch (error) {
       logger.error('Error checking auth status', {
+        name: error.name,
+        message: error.message,
+        stack: error.stack
+      });
+
+      ctx.status = 500;
+      ctx.body = {
+        code: 500,
+        message: '服务器内部错误',
+        data: null
+      };
+    }
+  }
+
+  // 重置用户密码
+  static async resetPassword(ctx) {
+    const { user_id } = ctx.params;
+    const { new_password } = ctx.request.body;
+
+    try {
+      logger.debug('Resetting user password', { user_id });
+      
+      // 参数验证
+      if (!new_password) {
+        ctx.status = 400;
+        ctx.body = {
+          code: 400,
+          message: '新密码不能为空',
+          data: null
+        };
+        return;
+      }
+
+      // 检查用户是否存在
+      const user = await User.findOne({ where: { user_id: user_id } });
+      if (!user) {
+        ctx.status = 404;
+        ctx.body = {
+          code: 404,
+          message: '用户不存在',
+          data: null
+        };
+        return;
+      }
+
+      // 生成新的密码哈希
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(new_password, salt);
+
+      // 更新密码
+      await user.update({
+        password_hash: hashedPassword,
+        last_password_updated: new Date()
+      });
+
+      logger.debug('User password reset successfully', { user_id });
+
+      // 记录操作日志
+      try {
+        await OperationLog.create({
+          user_id: user_id,
+          operation_type: 'RESET_PASSWORD',
+          resource_type: 'user',
+          resource_id: user_id,
+          status: 'SUCCESS'
+        });
+      } catch (logError) {
+        logger.error('Failed to create operation log', {
+          error: logError,
+          user_id,
+          operation_type: 'RESET_PASSWORD'
+        });
+      }
+
+      ctx.status = 200;
+      ctx.body = {
+        code: 200,
+        message: '密码重置成功',
+        data: null
+      };
+    } catch (error) {
+      logger.error('Error resetting password', {
         name: error.name,
         message: error.message,
         stack: error.stack
