@@ -10,7 +10,7 @@ class DepartmentController {
     try {
       const { 
         name,
-        code,
+        // code,  // 暂时注释掉 code 参数
         parent_id,
         status,
         description 
@@ -18,7 +18,7 @@ class DepartmentController {
 
       const department = await Department.create({
         name,
-        code,
+        code: '-',  // 使用默认值 "-"
         parent_id,
         status,
         description
@@ -31,21 +31,22 @@ class DepartmentController {
         data: department
       };
     } catch (error) {
-      if (error.name === 'SequelizeUniqueConstraintError') {
+      // 暂时注释掉编码重复检查
+      /*if (error.name === 'SequelizeUniqueConstraintError') {
         ctx.status = 400;
         ctx.body = {
           code: 400,
           message: '部门编码已存在',
           error: error.message
         };
-      } else {
+      } else {*/
         ctx.status = 500;
         ctx.body = {
           code: 500,
           message: '创建部门失败',
           error: error.message
         };
-      }
+      //}
     }
   }
 
@@ -152,25 +153,38 @@ class DepartmentController {
   // 获取部门树
   static async getTree(ctx) {
     try {
-      const departments = await Department.findAll({
-        include: [{
-          model: Department,
-          as: 'children',
-          include: [{
-            model: Department,
-            as: 'children'
-          }]
-        }],
-        where: {
-          parent_id: null
-        }
+      // 先获取所有部门
+      const allDepartments = await Department.findAll({
+        attributes: [
+          'department_id',
+          'name',
+          'code',
+          'parent_id',
+          'status',
+          'description',
+          'created_at',
+          'updated_at'
+        ],
+        order: [['created_at', 'ASC']]
       });
+
+      // 构建部门树
+      const buildTree = (departments, parentId = null) => {
+        return departments
+          .filter(dept => dept.parent_id === parentId)
+          .map(dept => ({
+            ...dept.toJSON(),
+            children: buildTree(departments, dept.department_id)
+          }));
+      };
+
+      const tree = buildTree(allDepartments);
 
       ctx.body = {
         code: 200,
         message: 'success',
         data: {
-          items: departments
+          items: tree
         }
       };
     } catch (error) {
