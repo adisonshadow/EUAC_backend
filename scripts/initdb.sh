@@ -38,7 +38,7 @@ echo "pgcrypto扩展安装完成"
 
 # 创建数据库结构
 echo "开始创建数据库结构..."
-PGPASSWORD="$DB_PASS" $PSQL_CMD -f "$(dirname "$0")/../Documents/UAC_Schema.sql" || { echo "创建数据库结构失败"; exit 1; }
+PGPASSWORD="$DB_PASS" $PSQL_CMD -f "$(dirname "$0")/schemas.sql" || { echo "创建数据库结构失败"; exit 1; }
 echo "数据库结构创建完成"
 
 # 创建超级管理员
@@ -49,7 +49,7 @@ echo "超级管理员创建完成"
 # 如果需要，导入测试数据
 if [[ "$*" == *"--with-mock"* ]]; then
     echo "开始导入测试数据..."
-    PGPASSWORD="$DB_PASS" $PSQL_CMD -f "$(dirname "$0")/seed_data.sql" || { echo "导入测试数据失败"; exit 1; }
+    PGPASSWORD="$DB_PASS" $PSQL_CMD -f "$(dirname "$0")/mock_data.sql" || { echo "导入测试数据失败"; exit 1; }
     echo "测试数据导入完成"
 fi
 

@@ -1,4 +1,3 @@
-const crypto = require('crypto');
 const config = require('../config');
 const logger = require('../utils/logger');
 const { Captcha } = require('../models');
@@ -220,7 +219,7 @@ class CaptchaController {
   }
 
   // 分析速度变化
-  static analyzeVelocity(trail, duration) {
+  static analyzeVelocity(trail) {
     let score = 1.0;
     let reason = [];
 

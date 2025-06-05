@@ -1,10 +1,8 @@
-const { Model, DataTypes } = require('sequelize');
-const sequelize = require('../utils/db');
+const { DataTypes } = require('sequelize');
+const _sequelize = require('../config/database');
 
-class RefreshToken extends Model {}
-
-module.exports = (sequelize) => {
-  RefreshToken.init({
+const RefreshToken = (sequelize) => {
+  const model = sequelize.define('RefreshToken', {
     token_id: {
       type: DataTypes.UUID,
       defaultValue: DataTypes.UUIDV4,
@@ -51,7 +49,6 @@ module.exports = (sequelize) => {
       comment: '更新时间'
     }
   }, {
-    sequelize,
     modelName: 'RefreshToken',
     tableName: 'refresh_tokens',
     schema: 'uac',
@@ -70,5 +67,7 @@ module.exports = (sequelize) => {
     ]
   });
 
-  return RefreshToken;
-}; 
+  return model;
+};
+
+module.exports = RefreshToken; 

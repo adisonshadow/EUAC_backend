@@ -1,62 +1,49 @@
 const { Department } = require('../models');
 const User = require('../models/user');
-const { Op, Sequelize } = require('sequelize');
+const { Op } = require('sequelize');
 const { validate: isUuid } = require('uuid');
-const { DepartmentClosure } = require('../models');
+const logger = require('../utils/logger');
 
 class DepartmentController {
   // 创建部门
   static async create(ctx) {
     try {
-      const { 
-        name,
-        // code,  // 暂时注释掉 code 参数
-        parent_id,
-        status,
-        description 
-      } = ctx.request.body;
+      const { name, description, parent_id, status = 'ACTIVE' } = ctx.request.body;
 
+      // 创建部门
       const department = await Department.create({
         name,
-        code: '-',  // 使用默认值 "-"
+        description,
         parent_id,
-        status,
-        description
+        status
       });
 
       ctx.status = 201;
       ctx.body = {
         code: 201,
-        message: 'success',
+        message: '部门创建成功',
         data: department
       };
     } catch (error) {
-      // 暂时注释掉编码重复检查
-      /*if (error.name === 'SequelizeUniqueConstraintError') {
-        ctx.status = 400;
-        ctx.body = {
-          code: 400,
-          message: '部门编码已存在',
-          error: error.message
-        };
-      } else {*/
-        ctx.status = 500;
-        ctx.body = {
-          code: 500,
-          message: '创建部门失败',
-          error: error.message
-        };
-      //}
+      logger.error('创建部门失败', { 
+        error: error.message,
+        body: ctx.request.body 
+      });
+      ctx.status = 500;
+      ctx.body = {
+        code: 500,
+        message: '创建部门失败',
+        error: error.message
+      };
     }
   }
 
   // 获取部门列表
   static async list(ctx) {
     try {
-      const { page, size, name, code, status } = ctx.query;
+      const { page, size, name, status } = ctx.query;
       const where = {};
       if (name) where.name = { [Op.like]: `%${name}%` };
-      if (code) where.code = { [Op.like]: `%${code}%` };
       if (status) where.status = status;
 
       // 构建查询选项
@@ -66,7 +53,6 @@ class DepartmentController {
         attributes: [
           'department_id',
           'name',
-          'code',
           'parent_id',
           'status',
           'description',
@@ -158,7 +144,6 @@ class DepartmentController {
         attributes: [
           'department_id',
           'name',
-          'code',
           'parent_id',
           'status',
           'description',

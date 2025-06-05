@@ -1,4 +1,4 @@
-const { Permission, Role, User, UserRole, RolePermission, DataPermissionRule, sequelize } = require('../models');
+const { Permission, Role, User, RolePermission, DataPermissionRule, sequelize } = require('../models');
 const { Op } = require('sequelize');
 const { v4: uuidv4 } = require('uuid');
 
@@ -120,7 +120,31 @@ class PermissionController {
     try {
       const { user_id, resource_type, action } = ctx.query;
 
-      const hasPermission = await Permission.findOne({
+      if (!user_id || !resource_type || !action) {
+        ctx.status = 400;
+        ctx.body = {
+          code: 400,
+          message: '缺少必要参数：user_id、resource_type 或 action'
+        };
+        return;
+      }
+
+      // 将 action 字符串转换为数组
+      const actionList = Array.isArray(action) ? action : action.split(',');
+
+      // 验证操作类型是否合法
+      const validActions = ['create', 'read', 'update', 'delete'];
+      const invalidActions = actionList.filter(a => !validActions.includes(a));
+      if (invalidActions.length > 0) {
+        ctx.status = 400;
+        ctx.body = {
+          code: 400,
+          message: `无效的操作类型: ${invalidActions.join(', ')}`
+        };
+        return;
+      }
+
+      const permissions = await Permission.findAll({
         include: [{
           model: Role,
           include: [{
@@ -130,15 +154,28 @@ class PermissionController {
         }],
         where: {
           resource_type,
-          action
+          actions: {
+            [Op.overlap]: actionList // 使用 PostgreSQL 的数组重叠操作符
+          }
         }
       });
+
+      // 检查用户是否有所有请求的操作权限
+      const hasAllPermissions = actionList.every(a => 
+        permissions.some(p => p.actions.includes(a))
+      );
 
       ctx.body = {
         code: 200,
         message: '权限检查成功',
         data: {
-          has_permission: !!hasPermission
+          has_permission: hasAllPermissions,
+          permissions: permissions.map(p => ({
+            permission_id: p.permission_id,
+            name: p.name,
+            code: p.code,
+            actions: p.actions
+          }))
         }
       };
     } catch (error) {
@@ -147,7 +184,8 @@ class PermissionController {
       ctx.body = {
         code: 500,
         message: '检查权限失败',
-        error: error.message
+        error: error.message,
+        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
       };
     }
   }
@@ -242,14 +280,26 @@ class PermissionController {
 
   // 创建权限
   static async create(ctx) {
-    const { name, code, description, resource_type, action } = ctx.request.body;
+    const { code, description, resource_type, actions } = ctx.request.body;
 
     // 验证必填字段
-    if (!name || !code || !resource_type || !action) {
+    if (!code || !resource_type || !actions || !Array.isArray(actions)) {
       ctx.status = 400;
       ctx.body = {
         code: 400,
-        message: '权限名称、编码、资源类型和操作类型不能为空'
+        message: '权限编码、资源类型和操作类型不能为空，且操作类型必须是数组'
+      };
+      return;
+    }
+
+    // 验证 actions 数组中的值是否合法
+    const validActions = ['create', 'read', 'update', 'delete'];
+    const invalidActions = actions.filter(action => !validActions.includes(action));
+    if (invalidActions.length > 0) {
+      ctx.status = 400;
+      ctx.body = {
+        code: 400,
+        message: `无效的操作类型: ${invalidActions.join(', ')}`
       };
       return;
     }
@@ -272,11 +322,10 @@ class PermissionController {
       // 创建权限
       const permission = await Permission.create({
         permission_id: uuidv4(),
-        name,
         code,
         description,
         resource_type,
-        action,
+        actions,
         status: 'ACTIVE'
       });
 
@@ -291,7 +340,9 @@ class PermissionController {
       ctx.status = 500;
       ctx.body = {
         code: 500,
-        message: '创建权限失败'
+        message: '创建权限失败',
+        error: error.message,
+        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
       };
     }
   }
@@ -339,7 +390,7 @@ class PermissionController {
   static async update(ctx) {
     try {
       const { permission_id } = ctx.params;
-      const { name, description } = ctx.request.body;
+      const { description, resource_type, actions } = ctx.request.body;
 
       // 检查权限是否存在
       const permission = await Permission.findByPk(permission_id);
@@ -352,10 +403,36 @@ class PermissionController {
         return;
       }
 
-      await permission.update({
-        name,
-        description
-      });
+      // 如果提供了 actions，验证其合法性
+      if (actions) {
+        if (!Array.isArray(actions)) {
+          ctx.status = 400;
+          ctx.body = {
+            code: 400,
+            message: '操作类型必须是数组'
+          };
+          return;
+        }
+
+        const validActions = ['create', 'read', 'update', 'delete'];
+        const invalidActions = actions.filter(action => !validActions.includes(action));
+        if (invalidActions.length > 0) {
+          ctx.status = 400;
+          ctx.body = {
+            code: 400,
+            message: `无效的操作类型: ${invalidActions.join(', ')}`
+          };
+          return;
+        }
+      }
+
+      const updateData = {
+        description,
+        resource_type,
+        ...(actions && { actions })
+      };
+
+      await permission.update(updateData);
 
       ctx.status = 200;
       ctx.body = {
@@ -368,7 +445,9 @@ class PermissionController {
       ctx.status = 500;
       ctx.body = {
         code: 500,
-        message: '更新权限失败'
+        message: '更新权限失败',
+        error: error.message,
+        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
       };
     }
   }
@@ -434,6 +513,45 @@ class PermissionController {
       ctx.body = {
         code: 500,
         message: '移除角色权限失败'
+      };
+    }
+  }
+
+  // 获取权限详情
+  static async getById(ctx) {
+    try {
+      const { permission_id } = ctx.params;
+
+      const permission = await Permission.findByPk(permission_id, {
+        include: [{
+          model: Role,
+          through: { attributes: [] }
+        }]
+      });
+
+      if (!permission) {
+        ctx.status = 404;
+        ctx.body = {
+          code: 404,
+          message: '权限不存在',
+          data: null
+        };
+        return;
+      }
+
+      ctx.status = 200;
+      ctx.body = {
+        code: 200,
+        message: '获取权限详情成功',
+        data: permission
+      };
+    } catch (error) {
+      console.error('获取权限详情失败:', error);
+      ctx.status = 500;
+      ctx.body = {
+        code: 500,
+        message: '获取权限详情失败',
+        error: error.message
       };
     }
   }

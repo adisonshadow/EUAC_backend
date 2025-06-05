@@ -18,7 +18,6 @@ CREATE SCHEMA uac;
 CREATE TABLE uac.departments (
     department_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name VARCHAR(100) NOT NULL,
-    code VARCHAR(50) NOT NULL UNIQUE,
     parent_id UUID,
     status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE' CHECK(status IN ('ACTIVE', 'DISABLED', 'ARCHIVED')),
     description TEXT,
@@ -47,16 +46,18 @@ CREATE TABLE uac.roles (
 -- 权限表（含软删除）
 CREATE TABLE uac.permissions (
     permission_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name VARCHAR(100) NOT NULL,
     code VARCHAR(50) NOT NULL UNIQUE,
     description TEXT,
     resource_type VARCHAR(50) NOT NULL,
-    action VARCHAR(50) NOT NULL,
+    actions JSONB NOT NULL DEFAULT '[]'::jsonb,
     status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE' CHECK(status IN ('ACTIVE', 'DISABLED', 'ARCHIVED')),
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     deleted_at TIMESTAMPTZ
 );
+
+-- 添加权限表注释
+COMMENT ON COLUMN uac.permissions.actions IS '操作类型列表（JSON数组）';
 
 -- 第三部分：创建用户相关表
 -- 用户表（含状态管理和软删除）
@@ -110,7 +111,6 @@ CREATE TABLE uac.department_history (
     history_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     department_id UUID NOT NULL,
     name VARCHAR(100) NOT NULL,
-    code VARCHAR(50) NOT NULL,
     parent_id UUID,
     status VARCHAR(20) NOT NULL CHECK(status IN ('ACTIVE', 'DISABLED', 'ARCHIVED')),
     description TEXT,
@@ -202,6 +202,37 @@ CREATE TABLE uac.refresh_tokens (
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
+-- 重置密码记录表
+CREATE TABLE uac.password_resets (
+    reset_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL,
+    token VARCHAR(8) NOT NULL,
+    expires_at TIMESTAMPTZ NOT NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'PENDING' CHECK(status IN ('PENDING', 'USED', 'EXPIRED')),
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 添加重置密码记录表外键
+ALTER TABLE uac.password_resets
+ADD CONSTRAINT fk_password_resets_user
+FOREIGN KEY (user_id) REFERENCES uac.users(user_id) ON DELETE CASCADE;
+
+-- 添加重置密码记录表索引
+CREATE INDEX idx_password_resets_user_id ON uac.password_resets(user_id);
+CREATE INDEX idx_password_resets_token ON uac.password_resets(token);
+CREATE INDEX idx_password_resets_status ON uac.password_resets(status);
+CREATE INDEX idx_password_resets_expires_at ON uac.password_resets(expires_at);
+
+-- 添加重置密码记录表注释
+COMMENT ON COLUMN uac.password_resets.reset_id IS '重置记录ID';
+COMMENT ON COLUMN uac.password_resets.user_id IS '用户ID';
+COMMENT ON COLUMN uac.password_resets.token IS '重置令牌（8位）';
+COMMENT ON COLUMN uac.password_resets.expires_at IS '过期时间';
+COMMENT ON COLUMN uac.password_resets.status IS '状态：PENDING-待使用, USED-已使用, EXPIRED-已过期';
+COMMENT ON COLUMN uac.password_resets.created_at IS '创建时间';
+COMMENT ON COLUMN uac.password_resets.updated_at IS '更新时间';
+
 -- 添加刷新令牌表外键
 ALTER TABLE uac.refresh_tokens
 ADD CONSTRAINT fk_refresh_tokens_user
@@ -274,7 +305,6 @@ CREATE INDEX idx_users_deleted_at ON uac.users(deleted_at);
 CREATE INDEX idx_users_status ON uac.users(status);
 
 CREATE INDEX idx_departments_parent_id ON uac.departments(parent_id);
-CREATE INDEX idx_departments_code ON uac.departments(code);
 CREATE INDEX idx_departments_deleted_at ON uac.departments(deleted_at);
 CREATE INDEX idx_departments_status ON uac.departments(status);
 

@@ -66,8 +66,8 @@ describe('数据库健康检查', () => {
 
   test('数据库表字段检查', async () => {
     try {
-      // 读取UAC_Schema.sql文件
-      const schemaPath = path.join(__dirname, '../Documents/UAC_Schema.sql');
+      // 读取schemas.sql文件
+      const schemaPath = path.join(__dirname, '../scripts/schemas.sql');
       const schemaContent = fs.readFileSync(schemaPath, 'utf8');
       
       // 检查关键表的字段

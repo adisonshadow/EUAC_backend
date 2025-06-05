@@ -3,8 +3,9 @@ const jwt = require('jsonwebtoken');
 const { UniqueConstraintError, Op } = require('sequelize');
 const config = require('../config');
 const logger = require('../utils/logger');
-const { User, LoginAttempt, OperationLog, RefreshToken, Department, Role, Captcha } = require('../models');
-const { sequelize } = require('../models');
+const { User, LoginAttempt, OperationLog, RefreshToken, Department: _Department, Role: _Role, Captcha, PasswordReset } = require('../models');
+const { sequelize: _sequelize } = require('../models');
+const { _ValidationError, _NotFoundError } = require('../utils/errors');
 
 // 自定义错误类
 class CustomValidationError extends Error {
@@ -20,14 +21,6 @@ class UnauthorizedError extends Error {
     super(message);
     this.name = 'UnauthorizedError';
     this.status = 401;
-  }
-}
-
-class NotFoundError extends Error {
-  constructor(message) {
-    super(message);
-    this.name = 'NotFoundError';
-    this.status = 404;
   }
 }
 
@@ -234,9 +227,21 @@ class UserController {
   // 获取用户列表
   static async list(ctx) {
     try {
-      const { page = 1, size = 30, username, name, email, phone, status, gender, department_id, user_id } = ctx.query;
-      const offset = (page - 1) * size;
+      const { 
+        page = 1, 
+        size = 30, 
+        username, 
+        name, 
+        email, 
+        phone, 
+        status, 
+        gender, 
+        department_id, 
+        user_id 
+      } = ctx.query;
       
+      const offset = (page - 1) * size;
+
       // 构建查询条件
       const where = {};
       if (user_id) where.user_id = user_id;
@@ -281,12 +286,11 @@ class UserController {
         }
       };
     } catch (error) {
-      logger.error('Error listing users', {
-        name: error.name,
-        message: error.message,
-        stack: error.stack
+      logger.error('Error listing users', { 
+        name: error.name, 
+        message: error.message, 
+        stack: error.stack 
       });
-
       ctx.status = 500;
       ctx.body = {
         code: 500,
@@ -438,7 +442,7 @@ class UserController {
       }
 
       // 验证密码
-      const isValid = await bcrypt.compare(password, user.password_hash);
+      const isValid = await user.verifyPassword(password);
       logger.debug('Password validation', { isValid });
 
       // 更新登录尝试的成功状态
@@ -1047,6 +1051,333 @@ class UserController {
         stack: error.stack
       });
 
+      ctx.status = 500;
+      ctx.body = {
+        code: 500,
+        message: '服务器内部错误',
+        data: null
+      };
+    }
+  }
+
+  // 为用户分配角色
+  static async assignRoles(ctx) {
+    const { user_id } = ctx.params;
+    const { role_ids } = ctx.request.body;
+
+    if (!Array.isArray(role_ids) || role_ids.length === 0) {
+      ctx.status = 400;
+      ctx.body = {
+        code: 400,
+        message: 'role_ids 必须为非空数组',
+        data: null
+      };
+      return;
+    }
+
+    try {
+      // 检查用户是否存在
+      const user = await User.findByPk(user_id);
+      if (!user) {
+        ctx.status = 404;
+        ctx.body = {
+          code: 404,
+          message: '用户不存在',
+          data: null
+        };
+        return;
+      }
+
+      // 检查所有角色是否存在
+      const roles = await _Role.findAll({ where: { role_id: role_ids } });
+      if (roles.length !== role_ids.length) {
+        ctx.status = 400;
+        ctx.body = {
+          code: 400,
+          message: '部分角色不存在',
+          data: null
+        };
+        return;
+      }
+
+      // 事务：先清空用户原有角色，再分配新角色
+      await _sequelize.transaction(async (t) => {
+        await user.setRoles([], { transaction: t });
+        await user.addRoles(roles, { transaction: t });
+      });
+
+      ctx.status = 200;
+      ctx.body = {
+        code: 200,
+        message: '分配成功',
+        data: null
+      };
+    } catch (error) {
+      logger.error('Error assigning roles to user', {
+        name: error.name,
+        message: error.message,
+        stack: error.stack
+      });
+      ctx.status = 500;
+      ctx.body = {
+        code: 500,
+        message: '服务器内部错误',
+        data: null
+      };
+    }
+  }
+
+  // 修改用户密码
+  static async changePassword(ctx) {
+    const { user_id } = ctx.params;
+    const { old_password, new_password } = ctx.request.body;
+
+    if (!old_password || !new_password) {
+      ctx.status = 400;
+      ctx.body = {
+        code: 400,
+        message: '原密码和新密码不能为空',
+        data: null
+      };
+      return;
+    }
+
+    try {
+      // 检查用户是否存在
+      const user = await User.findByPk(user_id);
+      if (!user) {
+        ctx.status = 404;
+        ctx.body = {
+          code: 404,
+          message: '用户不存在',
+          data: null
+        };
+        return;
+      }
+
+      // 验证原密码
+      const isValid = await user.verifyPassword(old_password);
+      if (!isValid) {
+        ctx.status = 400;
+        ctx.body = {
+          code: 400,
+          message: '原密码错误',
+          data: null
+        };
+        return;
+      }
+
+      // 更新新密码
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(new_password, salt);
+      await user.update({ password_hash: hashedPassword, last_password_updated: new Date() });
+
+      ctx.status = 200;
+      ctx.body = {
+        code: 200,
+        message: '密码修改成功',
+        data: null
+      };
+    } catch (error) {
+      logger.error('Error changing user password', {
+        name: error.name,
+        message: error.message,
+        stack: error.stack
+      });
+      ctx.status = 500;
+      ctx.body = {
+        code: 500,
+        message: '服务器内部错误',
+        data: null
+      };
+    }
+  }
+
+  // 修改用户状态
+  static async updateStatus(ctx) {
+    const { user_id } = ctx.params;
+    const { status } = ctx.request.body;
+
+    if (!status) {
+      ctx.status = 400;
+      ctx.body = {
+        code: 400,
+        message: '状态不能为空',
+        data: null
+      };
+      return;
+    }
+
+    const validStatus = ['ACTIVE', 'DISABLED', 'LOCKED'];
+    if (!validStatus.includes(status)) {
+      ctx.status = 400;
+      ctx.body = {
+        code: 400,
+        message: '无效的状态值',
+        data: null
+      };
+      return;
+    }
+
+    try {
+      // 检查用户是否存在
+      const user = await User.findByPk(user_id);
+      if (!user) {
+        ctx.status = 404;
+        ctx.body = {
+          code: 404,
+          message: '用户不存在',
+          data: null
+        };
+        return;
+      }
+
+      await user.update({ status });
+
+      ctx.status = 200;
+      ctx.body = {
+        code: 200,
+        message: '状态更新成功',
+        data: null
+      };
+    } catch (error) {
+      logger.error('Error updating user status', {
+        name: error.name,
+        message: error.message,
+        stack: error.stack
+      });
+      ctx.status = 500;
+      ctx.body = {
+        code: 500,
+        message: '服务器内部错误',
+        data: null
+      };
+    }
+  }
+
+  /**
+   * 请求重置密码
+   * @param {Object} ctx - Koa上下文
+   */
+  static async requestPasswordResetToken(ctx) {
+    const { username, email } = ctx.request.body;
+
+    try {
+      // 查找用户
+      const user = await User.findOne({
+        where: {
+          username,
+          email,
+          status: 'ACTIVE'
+        }
+      });
+
+      if (!user) {
+        ctx.status = 400;
+        ctx.body = {
+          code: 400,
+          message: '用户名或邮箱不正确',
+          data: null
+        };
+        return;
+      }
+
+      // 生成8位随机令牌
+      const token = Math.random().toString(36).substring(2, 10).toUpperCase();
+      const expiresAt = new Date(Date.now() + 30 * 60 * 1000); // 30分钟后过期
+
+      // 创建重置记录
+      await PasswordReset.create({
+        user_id: user.user_id,
+        token,
+        expires_at: expiresAt,
+        status: 'PENDING'
+      });
+
+      // TODO: 发送邮件
+      // 这里需要实现邮件发送功能，将token发送到用户邮箱
+      console.log(`重置密码令牌: ${token}`);
+
+      ctx.status = 200;
+      ctx.body = {
+        code: 200,
+        message: '重置密码邮件已发送',
+        data: null
+      };
+    } catch (error) {
+      console.error('请求重置密码失败:', error);
+      ctx.status = 500;
+      ctx.body = {
+        code: 500,
+        message: '服务器内部错误',
+        data: null
+      };
+    }
+  }
+
+  /**
+   * 使用令牌重置密码
+   * @param {Object} ctx - Koa上下文
+   */
+  static async resetPasswordWithToken(ctx) {
+    const { username, token, new_password } = ctx.request.body;
+
+    try {
+      // 查找用户
+      const user = await User.findOne({
+        where: {
+          username,
+          status: 'ACTIVE'
+        }
+      });
+
+      if (!user) {
+        ctx.status = 400;
+        ctx.body = {
+          code: 400,
+          message: '用户不存在',
+          data: null
+        };
+        return;
+      }
+
+      // 查找有效的重置记录
+      const resetRecord = await PasswordReset.findOne({
+        where: {
+          user_id: user.user_id,
+          token,
+          status: 'PENDING',
+          expires_at: {
+            [Op.gt]: new Date()
+          }
+        }
+      });
+
+      if (!resetRecord) {
+        ctx.status = 400;
+        ctx.body = {
+          code: 400,
+          message: '重置令牌无效或已过期',
+          data: null
+        };
+        return;
+      }
+
+      // 更新密码
+      const hashedPassword = await bcrypt.hash(new_password, 10);
+      await user.update({ password_hash: hashedPassword });
+
+      // 标记重置记录为已使用
+      await resetRecord.update({ status: 'USED' });
+
+      ctx.status = 200;
+      ctx.body = {
+        code: 200,
+        message: '密码重置成功',
+        data: null
+      };
+    } catch (error) {
+      console.error('重置密码失败:', error);
       ctx.status = 500;
       ctx.body = {
         code: 500,

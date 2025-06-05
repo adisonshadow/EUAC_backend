@@ -128,7 +128,10 @@ http://localhost:3000/swagger.json
 ### 部署
 ```bash
 # 启动服务
-npm run dev
+yarn dev
+
+# ESLint
+yarn lint
 ```
 
 ### git

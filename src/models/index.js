@@ -1,33 +1,20 @@
-const sequelize = require('../utils/db');
+const sequelize = require('../config/database');
 
 // 导入所有模型定义
-const UserModel = require('./user');
-const DepartmentModel = require('./department');
-const RoleModel = require('./role');
-const PermissionModel = require('./permission');
-const UserRoleModel = require('./user_role');
-const RolePermissionModel = require('./role_permission');
-const DataPermissionRuleModel = require('./data_permission_rule');
-const OperationLogModel = require('./operation_log');
-const RefreshTokenModel = require('./refresh_token');
-const DepartmentClosureModel = require('./department_closure');
-const DepartmentHistoryModel = require('./department_history');
+const User = require('./user');
+const Department = require('./department');
+const Role = require('./role');
+const Permission = require('./permission');
+const UserRole = require('./user_role');
+const RolePermission = require('./role_permission');
+const DataPermissionRule = require('./data_permission_rule');
+const OperationLog = require('./operation_log');
+const RefreshToken = require('./refreshToken');
+const DepartmentClosure = require('./department_closure');
+const DepartmentHistory = require('./department_history');
 const LoginAttempt = require('./loginAttempt');
-const CaptchaModel = require('./captcha');
-
-// 初始化所有模型
-const User = UserModel(sequelize);
-const Department = DepartmentModel(sequelize);
-const Role = RoleModel(sequelize);
-const Permission = PermissionModel(sequelize);
-const UserRole = UserRoleModel(sequelize);
-const RolePermission = RolePermissionModel(sequelize);
-const DataPermissionRule = DataPermissionRuleModel(sequelize);
-const OperationLog = OperationLogModel(sequelize);
-const RefreshToken = RefreshTokenModel(sequelize);
-const DepartmentClosure = DepartmentClosureModel(sequelize);
-const DepartmentHistory = DepartmentHistoryModel(sequelize);
-const Captcha = CaptchaModel(sequelize);
+const Captcha = require('./captcha');
+const PasswordReset = require('./passwordReset');
 
 // 设置模型关联关系
 User.belongsTo(Department, { foreignKey: 'department_id' });
@@ -54,6 +41,9 @@ Department.hasMany(DepartmentClosure, { foreignKey: 'descendant_id', as: 'descen
 User.hasMany(LoginAttempt, { foreignKey: 'user_id' });
 LoginAttempt.belongsTo(User, { foreignKey: 'user_id' });
 
+User.hasMany(PasswordReset, { foreignKey: 'user_id' });
+PasswordReset.belongsTo(User, { foreignKey: 'user_id' });
+
 module.exports = {
   sequelize,
   User,
@@ -68,5 +58,6 @@ module.exports = {
   DepartmentClosure,
   DepartmentHistory,
   LoginAttempt,
-  Captcha
+  Captcha,
+  PasswordReset
 }; 

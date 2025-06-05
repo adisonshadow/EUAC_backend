@@ -1,164 +1,149 @@
-const { Model, DataTypes } = require('sequelize');
+const { DataTypes } = require('sequelize');
 const bcrypt = require('bcryptjs');
-const config = require('../config');
-const { logger } = require('../utils/logger');
+const sequelize = require('../config/database');
 
-class User extends Model {
-  static async verifyPassword(user, password) {
-    return bcrypt.compare(password, user.password_hash);
+const User = sequelize.define('User', {
+  user_id: {
+    type: DataTypes.UUID,
+    primaryKey: true,
+    defaultValue: DataTypes.UUIDV4,
+    comment: '用户ID'
+  },
+  username: {
+    type: DataTypes.STRING(50),
+    allowNull: false,
+    unique: true,
+    field: 'username',
+    comment: '用户名'
+  },
+  password_hash: {
+    type: DataTypes.STRING(255),
+    allowNull: false,
+    field: 'password_hash',
+    comment: '密码哈希'
+  },
+  name: {
+    type: DataTypes.STRING(100),
+    allowNull: true,
+    field: 'name',
+    comment: '用户姓名'
+  },
+  avatar: {
+    type: DataTypes.STRING(255),
+    allowNull: true,
+    field: 'avatar',
+    comment: '用户头像URL'
+  },
+  gender: {
+    type: DataTypes.STRING(10),
+    allowNull: true,
+    field: 'gender',
+    comment: '用户性别：MALE-男, FEMALE-女, OTHER-其他'
+  },
+  email: {
+    type: DataTypes.STRING(255),
+    allowNull: true,
+    field: 'email',
+    comment: '用户邮箱'
+  },
+  phone: {
+    type: DataTypes.STRING(20),
+    allowNull: true,
+    field: 'phone',
+    comment: '用户电话'
+  },
+  department_id: {
+    type: DataTypes.UUID,
+    allowNull: true,
+    field: 'department_id',
+    comment: '部门ID'
+  },
+  status: {
+    type: DataTypes.STRING(20),
+    defaultValue: 'ACTIVE',
+    field: 'status',
+    comment: '用户状态：ACTIVE-启用, DISABLED-停用, LOCKED-锁定, ARCHIVED-离职归档'
+  },
+  last_password_updated: {
+    type: DataTypes.DATE,
+    defaultValue: DataTypes.NOW,
+    field: 'last_password_updated',
+    comment: '最后密码更新时间'
+  },
+  created_at: {
+    type: DataTypes.DATE,
+    defaultValue: DataTypes.NOW,
+    field: 'created_at',
+    comment: '创建时间'
+  },
+  updated_at: {
+    type: DataTypes.DATE,
+    defaultValue: DataTypes.NOW,
+    field: 'updated_at',
+    comment: '更新时间'
+  },
+  deleted_at: {
+    type: DataTypes.DATE,
+    allowNull: true,
+    field: 'deleted_at',
+    comment: '删除时间'
   }
-
-  // 软删除方法
-  async softDelete() {
-    const now = new Date();
-    await this.update({
-      status: 'ARCHIVED'
-    });
-    await this.destroy();
-    return this;
-  }
-
-  // 恢复删除的方法
-  static async restore(instance) {
-    if (!instance) {
-      throw new Error('Instance is required');
+}, {
+  tableName: 'users',
+  schema: 'uac',
+  timestamps: true,
+  underscored: true,
+  paranoid: true,
+  deletedAt: 'deleted_at',
+  scopes: {
+    active: {
+      where: {
+        deleted_at: null,
+        status: 'ACTIVE'
+      }
     }
-
-    // 使用 Sequelize 的 restore 方法恢复记录
-    await instance.restore();
-    
-    // 更新状态为 ACTIVE
-    await instance.update({
-      status: 'ACTIVE'
-    });
-
-    // 重新加载实例以获取最新数据
-    await instance.reload();
-    
-    return instance;
-  }
-}
-
-module.exports = (sequelize) => {
-  User.init({
-    user_id: {
-      type: DataTypes.UUID,
-      primaryKey: true,
-      defaultValue: DataTypes.UUIDV4,
-      comment: '用户ID'
-    },
-    username: {
-      type: DataTypes.STRING(50),
-      allowNull: false,
+  },
+  indexes: [
+    {
       unique: true,
-      field: 'username',
-      comment: '用户名'
+      fields: ['username']
     },
-    password_hash: {
-      type: DataTypes.STRING(255),
-      allowNull: false,
-      field: 'password_hash',
-      comment: '密码哈希'
+    {
+      fields: ['email']
     },
-    name: {
-      type: DataTypes.STRING(100),
-      allowNull: true,
-      field: 'name',
-      comment: '用户姓名'
+    {
+      fields: ['department_id']
     },
-    avatar: {
-      type: DataTypes.STRING(255),
-      allowNull: true,
-      field: 'avatar',
-      comment: '用户头像URL'
-    },
-    gender: {
-      type: DataTypes.STRING(10),
-      allowNull: true,
-      field: 'gender',
-      comment: '用户性别：MALE-男, FEMALE-女, OTHER-其他'
-    },
-    email: {
-      type: DataTypes.STRING(255),
-      allowNull: true,
-      field: 'email',
-      comment: '用户邮箱'
-    },
-    phone: {
-      type: DataTypes.STRING(20),
-      allowNull: true,
-      field: 'phone',
-      comment: '用户电话'
-    },
-    department_id: {
-      type: DataTypes.UUID,
-      allowNull: true,
-      field: 'department_id',
-      comment: '部门ID'
-    },
-    status: {
-      type: DataTypes.STRING(20),
-      defaultValue: 'ACTIVE',
-      field: 'status',
-      comment: '用户状态：ACTIVE-启用, DISABLED-停用, LOCKED-锁定, ARCHIVED-离职归档'
-    },
-    last_password_updated: {
-      type: DataTypes.DATE,
-      defaultValue: DataTypes.NOW,
-      field: 'last_password_updated',
-      comment: '最后密码更新时间'
-    },
-    created_at: {
-      type: DataTypes.DATE,
-      defaultValue: DataTypes.NOW,
-      field: 'created_at',
-      comment: '创建时间'
-    },
-    updated_at: {
-      type: DataTypes.DATE,
-      defaultValue: DataTypes.NOW,
-      field: 'updated_at',
-      comment: '更新时间'
-    },
-    deleted_at: {
-      type: DataTypes.DATE,
-      allowNull: true,
-      field: 'deleted_at',
-      comment: '删除时间'
+    {
+      fields: ['deleted_at']
     }
-  }, {
-    sequelize,
-    modelName: 'User',
-    tableName: 'users',
-    schema: 'uac',
-    timestamps: true,
-    underscored: true,
-    paranoid: true, // 启用软删除
-    deletedAt: 'deleted_at', // 指定软删除字段
-    scopes: {
-      active: {
-        where: {
-          deleted_at: null,
-          status: 'ACTIVE'
-        }
-      }
-    },
-    indexes: [
-      {
-        unique: true,
-        fields: ['username']
-      },
-      {
-        fields: ['email']
-      },
-      {
-        fields: ['department_id']
-      },
-      {
-        fields: ['deleted_at']
-      }
-    ]
-  });
+  ]
+});
 
-  return User;
-}; 
+// 添加实例方法
+User.prototype.verifyPassword = async function(password) {
+  return bcrypt.compare(password, this.password_hash);
+};
+
+User.prototype.softDelete = async function() {
+  await this.update({
+    status: 'ARCHIVED'
+  });
+  await this.destroy();
+  return this;
+};
+
+// 添加静态方法
+User.restore = async function(instance) {
+  if (!instance) {
+    throw new Error('Instance is required');
+  }
+  await instance.restore();
+  await instance.update({
+    status: 'ACTIVE'
+  });
+  await instance.reload();
+  return instance;
+};
+
+module.exports = User; 

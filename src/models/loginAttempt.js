@@ -1,15 +1,13 @@
 // 登录尝试模型
 
-const { Model, DataTypes } = require('sequelize');
-const sequelize = require('../utils/db');
+const { DataTypes } = require('sequelize');
+const sequelize = require('../config/database');
 
-class LoginAttempt extends Model {}
-
-LoginAttempt.init({
+const LoginAttempt = sequelize.define('LoginAttempt', {
     id: {
-        type: DataTypes.INTEGER,
-        primaryKey: true,
-        autoIncrement: true
+        type: DataTypes.UUID,
+        defaultValue: DataTypes.UUIDV4,
+        primaryKey: true
     },
     user_id: {
         type: DataTypes.UUID,
@@ -44,8 +42,6 @@ LoginAttempt.init({
         defaultValue: DataTypes.NOW
     }
 }, {
-    sequelize,
-    modelName: 'LoginAttempt',
     tableName: 'login_attempts',
     schema: 'uac',
     timestamps: true,

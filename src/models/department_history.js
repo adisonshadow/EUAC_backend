@@ -1,74 +1,58 @@
-const { Model, DataTypes } = require('sequelize');
+const { DataTypes } = require('sequelize');
+const sequelize = require('../config/database');
 
-class DepartmentHistory extends Model {}
+const DepartmentHistory = sequelize.define('DepartmentHistory', {
+  history_id: {
+    type: DataTypes.UUID,
+    primaryKey: true,
+    defaultValue: DataTypes.UUIDV4
+  },
+  department_id: {
+    type: DataTypes.UUID,
+    allowNull: false
+  },
+  name: {
+    type: DataTypes.STRING(100),
+    allowNull: false
+  },
+  code: {
+    type: DataTypes.STRING(50),
+    allowNull: false
+  },
+  parent_id: {
+    type: DataTypes.UUID,
+    allowNull: true
+  },
+  status: {
+    type: DataTypes.STRING(20),
+    allowNull: false
+  },
+  description: {
+    type: DataTypes.TEXT,
+    allowNull: true
+  },
+  valid_from: {
+    type: DataTypes.DATE,
+    allowNull: false
+  },
+  valid_to: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
+  created_at: {
+    type: DataTypes.DATE,
+    defaultValue: DataTypes.NOW
+  },
+  updated_at: {
+    type: DataTypes.DATE,
+    defaultValue: DataTypes.NOW
+  }
+}, {
+  tableName: 'department_history',
+  schema: 'uac',
+  timestamps: true,
+  createdAt: 'created_at',
+  updatedAt: 'updated_at'
+});
 
-module.exports = (sequelize) => {
-  DepartmentHistory.init({
-    history_id: {
-      type: DataTypes.INTEGER,
-      primaryKey: true,
-      autoIncrement: true,
-      comment: '历史ID'
-    },
-    department_id: {
-      type: DataTypes.UUID,
-      allowNull: false,
-      comment: '部门ID'
-    },
-    name: {
-      type: DataTypes.STRING(100),
-      allowNull: false,
-      comment: '部门名称'
-    },
-    code: {
-      type: DataTypes.STRING(50),
-      allowNull: false,
-      comment: '部门编码'
-    },
-    parent_id: {
-      type: DataTypes.UUID,
-      allowNull: true,
-      comment: '父部门ID'
-    },
-    status: {
-      type: DataTypes.STRING(20),
-      allowNull: false,
-      comment: '部门状态'
-    },
-    description: {
-      type: DataTypes.TEXT,
-      allowNull: true,
-      comment: '部门描述'
-    },
-    valid_from: {
-      type: DataTypes.DATE,
-      allowNull: false,
-      comment: '生效时间'
-    },
-    valid_to: {
-      type: DataTypes.DATE,
-      allowNull: true,
-      comment: '失效时间'
-    },
-    created_at: {
-      type: DataTypes.DATE,
-      defaultValue: DataTypes.NOW,
-      comment: '创建时间'
-    },
-    updated_at: {
-      type: DataTypes.DATE,
-      defaultValue: DataTypes.NOW,
-      comment: '更新时间'
-    }
-  }, {
-    sequelize,
-    modelName: 'DepartmentHistory',
-    tableName: 'department_history',
-    schema: 'uac',
-    timestamps: true,
-    createdAt: 'created_at',
-    updatedAt: 'updated_at'
-  });
-
-  return DepartmentHistory;
-}; 
+module.exports = DepartmentHistory; 
