@@ -39,7 +39,7 @@ const router = new Router({
  *               status:
  *                 type: string
  *                 description: 部门状态
- *                 enum: [ACTIVE, INACTIVE]
+ *                 enum: [ACTIVE, DISABLED]
  *                 default: ACTIVE
  *                 example: "ACTIVE"
  *     responses:
@@ -108,32 +108,40 @@ router.post('/', DepartmentController.create);
  *     tags:
  *       - Departments
  *     summary: 获取部门列表
- *     description: 获取部门列表，支持分页和筛选
+ *     description: 获取部门列表，支持分页和筛选。当 size 参数为 -1 时，返回所有记录不分页。
  *     security:
  *       - bearerAuth: []
  *     parameters:
- *       - in: query
- *         name: page
+ *       - name: page
+ *         in: query
  *         schema:
  *           type: integer
  *           default: 1
- *         description: 页码
- *       - in: query
- *         name: size
+ *           minimum: 1
+ *         description: 页码（当 size 不为 -1 时有效）
+ *       - name: size
+ *         in: query
  *         schema:
  *           type: integer
  *           default: 10
- *         description: 每页数量
- *       - in: query
- *         name: name
+ *           minimum: -1
+ *           maximum: 100
+ *         description: 每页数量，设置为 -1 时返回所有记录不分页
+ *       - name: name
+ *         in: query
  *         schema:
  *           type: string
- *         description: 部门名称（模糊搜索）
- *       - in: query
- *         name: status
+ *         description: 部门名称（支持模糊匹配）
+ *       - name: code
+ *         in: query
  *         schema:
  *           type: string
- *           enum: [ACTIVE, INACTIVE]
+ *         description: 部门编码（支持模糊匹配）
+ *       - name: status
+ *         in: query
+ *         schema:
+ *           type: string
+ *           enum: [ACTIVE, DISABLED]
  *         description: 部门状态
  *     responses:
  *       200:
@@ -154,55 +162,24 @@ router.post('/', DepartmentController.create);
  *                   properties:
  *                     total:
  *                       type: integer
+ *                       description: 总记录数（当 size 为 -1 时等于 items 的长度）
  *                       example: 100
- *                     current:
+ *                     page:
  *                       type: integer
+ *                       description: 当前页码（当 size 为 -1 时固定为 1）
  *                       example: 1
  *                     size:
  *                       type: integer
+ *                       description: 每页数量（当 size 为 -1 时等于总记录数）
  *                       example: 10
  *                     items:
  *                       type: array
  *                       items:
- *                         type: object
- *                         properties:
- *                           department_id:
- *                             type: string
- *                             format: uuid
- *                             example: "550e8400-e29b-41d4-a716-446655440000"
- *                           name:
- *                             type: string
- *                             example: "技术部"
- *                           description:
- *                             type: string
- *                             example: "负责公司技术研发"
- *                           parent_id:
- *                             type: string
- *                             format: uuid
- *                             example: "550e8400-e29b-41d4-a716-446655440000"
- *                           status:
- *                             type: string
- *                             example: "ACTIVE"
- *                           created_at:
- *                             type: string
- *                             format: date-time
- *                             example: "2024-03-21T10:00:00.000Z"
- *                           updated_at:
- *                             type: string
- *                             format: date-time
- *                             example: "2024-03-21T10:00:00.000Z"
+ *                         $ref: '#/components/schemas/Department'
  *       401:
  *         description: 未授权
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
  *       500:
  *         description: 服务器错误
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
  */
 router.get('/', DepartmentController.list);
 
@@ -384,7 +361,7 @@ router.get('/:department_id', DepartmentController.getById);
  *               status:
  *                 type: string
  *                 description: 部门状态
- *                 enum: [ACTIVE, INACTIVE]
+ *                 enum: [ACTIVE, DISABLED]
  *                 example: "ACTIVE"
  *     responses:
  *       200:
@@ -619,7 +596,7 @@ router.get('/:department_id/users', DepartmentController.getMembers);
  *           description: 父部门ID
  *         status:
  *           type: string
- *           enum: [ACTIVE, INACTIVE]
+ *           enum: [ACTIVE, DISABLED]
  *           example: "ACTIVE"
  *           description: 部门状态
  *         created_at:

@@ -8,17 +8,18 @@ const Captcha = require('../models/captcha');
 const LoginAttempt = require('../models/loginAttempt');
 const RefreshToken = require('../models/refreshToken');
 const { CustomValidationError, UnauthorizedError, ValidationError: _ValidationError, AuthenticationError: _AuthenticationError } = require('../utils/errors');
-
+const Application = require('../models/application');
+ 
 class AuthController {
   /**
-   * 用户登录
+   * 用户登录 
    */
   static async login(ctx) {
-    const { username, password, captcha_data } = ctx.request.body;
+    const { username, password, captcha_data, application_id } = ctx.request.body;
     const captcha_id = captcha_data?.captcha_id;
 
     try {
-      logger.debug('User login attempt', { username });
+      logger.debug('User login attempt', { username, application_id });
       
       if (!username || !password) {
         const error = new CustomValidationError('用户名和密码不能为空');
@@ -187,17 +188,36 @@ class AuthController {
 
       logger.debug('User logged in successfully', { username });
 
+      // 如果提供了 application_id，获取应用的 SSO 配置
+      let jwtSecret = config.api.security.jwtSecret;
+      let application = null;
+      
+      if (application_id) {
+        application = await Application.findOne({
+          where: {
+            application_id,
+            status: 'ACTIVE',
+            sso_enabled: true
+          }
+        });
+
+        if (application && application.sso_config && application.sso_config.salt) {
+          jwtSecret = application.sso_config.salt;
+          logger.debug('Using SSO salt as JWT secret', { application_id, salt: application.sso_config.salt });
+        }
+      }
+
       // 生成访问令牌
       const token = jwt.sign(
         { user_id: user.user_id, username: user.username },
-        config.api.security.jwtSecret,
+        jwtSecret,
         { expiresIn: config.api.security.jwtExpiresIn }
       );
       
       // 生成刷新令牌
       const refreshToken = jwt.sign(
         { user_id: user.user_id },
-        config.api.security.jwtSecret,
+        jwtSecret,
         { expiresIn: '7d' }
       );
 
@@ -209,17 +229,30 @@ class AuthController {
         status: 'ACTIVE'
       });
 
+      // 准备返回数据
+      const responseData = {
+        token: token,
+        refresh_token: refreshToken,
+        expires_in: config.api.security.jwtExpiresIn,
+        user_id: user.user_id
+      };
+
+      // 如果找到了应用，添加SSO配置到响应中
+      if (application && application.sso_config) {
+        responseData.sso = {
+          application_id: application.application_id,
+          application_name: application.name,
+          application_code: application.code,
+          sso_config: application.sso_config
+        };
+      }
+
       // 登录成功
       ctx.status = 200;
       ctx.body = {
         code: 200,
         message: 'success',
-        data: {
-          token: token,
-          refresh_token: refreshToken,
-          expires_in: config.api.security.jwtExpiresIn,
-          user_id: user.user_id
-        }
+        data: responseData
       };
     } catch (error) {
       logger.error('Error during login', {
@@ -241,10 +274,10 @@ class AuthController {
    * 刷新令牌
    */
   static async refreshToken(ctx) {
-    const { refresh_token } = ctx.request.body;
+    const { refresh_token, app } = ctx.request.body;
 
     try {
-      logger.debug('Refreshing token', { refresh_token });
+      logger.debug('Refreshing token', { refresh_token, app });
 
       if (!refresh_token) {
         ctx.status = 400;
@@ -254,6 +287,33 @@ class AuthController {
           data: null
         };
         return;
+      }
+
+      // 检查是否通过app参数传递了application_id（第三方系统验证）
+      let jwtSecret = config.api.security.jwtSecret;
+      
+      if (app) {
+        // 验证application_id并获取SSO salt
+        const application = await Application.findOne({
+          where: {
+            application_id: app,
+            status: 'ACTIVE',
+            sso_enabled: true
+          }
+        });
+
+        if (!application || !application.sso_config || !application.sso_config.salt) {
+          ctx.status = 400;
+          ctx.body = {
+            code: 400,
+            message: '无效的应用ID或SSO配置',
+            data: null
+          };
+          return;
+        }
+
+        jwtSecret = application.sso_config.salt;
+        logger.debug('Using SSO salt for token refresh', { application_id: app, salt: application.sso_config.salt });
       }
 
       // 查找刷新令牌
@@ -296,14 +356,14 @@ class AuthController {
       // 生成新的访问令牌
       const token = jwt.sign(
         { user_id: user.user_id, username: user.username },
-        config.api.security.jwtSecret,
+        jwtSecret,
         { expiresIn: config.api.security.jwtExpiresIn }
       );
 
       // 生成新的刷新令牌
       const newRefreshToken = jwt.sign(
         { user_id: user.user_id },
-        config.api.security.jwtSecret,
+        jwtSecret,
         { expiresIn: '7d' }
       );
 
@@ -415,7 +475,7 @@ class AuthController {
       });
 
       if (!user) {
-        logger.warn('User not found or inactive', { user_id: ctx.state.user.user_id });
+        logger.warn('User not found or DISABLED', { user_id: ctx.state.user.user_id });
         ctx.status = 401;
         ctx.body = {
           code: 401,

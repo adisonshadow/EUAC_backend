@@ -141,33 +141,47 @@ router.post('/', PermissionController.create);
  *     tags:
  *       - Permissions
  *     summary: 获取权限列表
- *     description: 获取权限列表，支持分页和筛选
+ *     description: 获取权限列表，支持分页和筛选。当 size 参数为 -1 时，返回所有记录不分页。
  *     security:
  *       - bearerAuth: []
  *     parameters:
- *       - in: query
- *         name: page
+ *       - name: page
+ *         in: query
  *         schema:
  *           type: integer
  *           default: 1
- *         description: 页码
- *       - in: query
- *         name: limit
+ *           minimum: 1
+ *         description: 页码（当 size 不为 -1 时有效）
+ *       - name: size
+ *         in: query
  *         schema:
  *           type: integer
  *           default: 10
- *         description: 每页数量
- *       - in: query
- *         name: search
+ *           minimum: -1
+ *           maximum: 100
+ *         description: 每页数量，设置为 -1 时返回所有记录不分页
+ *       - name: name
+ *         in: query
  *         schema:
  *           type: string
- *         description: 搜索关键词
- *       - in: query
- *         name: resource_type
+ *         description: 权限名称（支持模糊匹配）
+ *       - name: code
+ *         in: query
+ *         schema:
+ *           type: string
+ *         description: 权限编码（支持模糊匹配）
+ *       - name: type
+ *         in: query
  *         schema:
  *           type: string
  *           enum: [MENU, BUTTON, API]
- *         description: 资源类型
+ *         description: 权限类型
+ *       - name: status
+ *         in: query
+ *         schema:
+ *           type: string
+ *           enum: [ACTIVE, DISABLED]
+ *         description: 权限状态
  *     responses:
  *       200:
  *         description: 获取成功
@@ -187,71 +201,24 @@ router.post('/', PermissionController.create);
  *                   properties:
  *                     total:
  *                       type: integer
+ *                       description: 总记录数（当 size 为 -1 时等于 items 的长度）
  *                       example: 100
  *                     page:
  *                       type: integer
+ *                       description: 当前页码（当 size 为 -1 时固定为 1）
  *                       example: 1
- *                     limit:
+ *                     size:
  *                       type: integer
+ *                       description: 每页数量（当 size 为 -1 时等于总记录数）
  *                       example: 10
  *                     items:
  *                       type: array
  *                       items:
- *                         type: object
- *                         properties:
- *                           permission_id:
- *                             type: string
- *                             example: "550e8400-e29b-41d4-a716-446655440000"
- *                           code:
- *                             type: string
- *                             example: "user:manage"
- *                           description:
- *                             type: string
- *                             example: "允许对用户进行增删改查操作"
- *                           resource_type:
- *                             type: string
- *                             example: "MENU"
- *                           actions:
- *                             type: array
- *                             items:
- *                               type: string
- *                             example: ["create", "read", "update", "delete"]
- *                           created_at:
- *                             type: string
- *                             format: date-time
- *                             example: "2024-03-21T10:00:00.000Z"
+ *                         $ref: '#/components/schemas/Permission'
  *       401:
  *         description: 未授权
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 code:
- *                   type: integer
- *                   example: 401
- *                 message:
- *                   type: string
- *                   example: 未授权
- *                 data:
- *                   type: null
- *                   example: null
  *       500:
  *         description: 服务器错误
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 code:
- *                   type: integer
- *                   example: 500
- *                 message:
- *                   type: string
- *                   example: 服务器内部错误
- *                 data:
- *                   type: null
- *                   example: null
  */
 router.get('/', PermissionController.list);
 
@@ -489,6 +456,8 @@ router.delete('/:permission_id', PermissionController.delete);
  *       - Permissions
  *     summary: 分配角色权限
  *     description: 为指定角色分配权限
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - name: permission_id
  *         in: path
@@ -542,6 +511,8 @@ router.post('/:permission_id/roles', PermissionController.assignRole);
  *       - Permissions
  *     summary: 获取用户权限
  *     description: 获取指定用户的所有权限
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - name: user_id
  *         in: path
@@ -591,6 +562,8 @@ router.get('/users/:user_id', PermissionController.getUserPermissions);
  *       - Permissions
  *     summary: 检查权限
  *     description: 检查用户是否拥有指定资源类型的多个操作权限
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - name: user_id
  *         in: query
@@ -676,6 +649,8 @@ router.get('/check', PermissionController.checkPermission);
  *       - Permissions
  *     summary: 创建数据权限规则
  *     description: 创建新的数据权限规则
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -741,6 +716,8 @@ router.post('/rules', PermissionController.createRule);
  *       - Permissions
  *     summary: 获取数据权限规则列表
  *     description: 获取所有数据权限规则
+ *     security:
+ *       - bearerAuth: []
  *     responses:
  *       200:
  *         description: 获取成功

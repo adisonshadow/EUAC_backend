@@ -38,14 +38,43 @@ role_data AS (
 ),
 perm_data AS (
   INSERT INTO uac.permissions (permission_id, code, description, resource_type, actions, status, created_at, updated_at) VALUES
-  ('550e8400-e29b-41d4-a716-446655440001', 'user:manage', '用户管理权限', 'MENU', '["create", "read", "update", "delete"]', 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-  ('550e8400-e29b-41d4-a716-446655440002', 'role:manage', '角色管理权限', 'MENU', '["create", "read", "update", "delete"]', 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-  ('550e8400-e29b-41d4-a716-446655440003', 'permission:manage', '权限管理权限', 'MENU', '["create", "read", "update", "delete"]', 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-  ('550e8400-e29b-41d4-a716-446655440004', 'department:manage', '部门管理权限', 'MENU', '["create", "read", "update", "delete"]', 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-  ('550e8400-e29b-41d4-a716-446655440005', 'user:view', '查看用户权限', 'BUTTON', '["read"]', 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-  ('550e8400-e29b-41d4-a716-446655440006', 'user:edit', '编辑用户权限', 'BUTTON', '["update"]', 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-  ('550e8400-e29b-41d4-a716-446655440007', 'user:delete', '删除用户权限', 'BUTTON', '["delete"]', 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-  ('550e8400-e29b-41d4-a716-446655440008', 'user:create', '创建用户权限', 'BUTTON', '["create"]', 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+  -- MENU类型权限（只有read操作）
+  ('550e8400-e29b-41d4-a716-446655440001', 'system:manage', '系统管理', 'MENU', '["read"]', 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+  ('550e8400-e29b-41d4-a716-446655440002', 'user:manage', '用户管理', 'MENU', '["read"]', 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+  ('550e8400-e29b-41d4-a716-446655440003', 'role:manage', '角色管理', 'MENU', '["read"]', 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+  ('550e8400-e29b-41d4-a716-446655440004', 'permission:manage', '权限管理', 'MENU', '["read"]', 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+  ('550e8400-e29b-41d4-a716-446655440005', 'department:manage', '部门管理', 'MENU', '["read"]', 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+  ('550e8400-e29b-41d4-a716-446655440006', 'application:manage', '应用管理', 'MENU', '["read"]', 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+  ('550e8400-e29b-41d4-a716-446655440007', 'log:manage', '日志管理', 'MENU', '["read"]', 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+  
+  -- BUTTON类型权限（只有read操作）
+  ('550e8400-e29b-41d4-a716-446655440008', 'user:create', '创建用户', 'BUTTON', '["read"]', 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+  ('550e8400-e29b-41d4-a716-446655440009', 'user:edit', '编辑用户', 'BUTTON', '["read"]', 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+  ('550e8400-e29b-41d4-a716-446655440010', 'user:delete', '删除用户', 'BUTTON', '["read"]', 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+  ('550e8400-e29b-41d4-a716-446655440011', 'user:import', '导入用户', 'BUTTON', '["read"]', 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+  ('550e8400-e29b-41d4-a716-446655440012', 'user:export', '导出用户', 'BUTTON', '["read"]', 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+  ('550e8400-e29b-41d4-a716-446655440013', 'role:create', '创建角色', 'BUTTON', '["read"]', 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+  ('550e8400-e29b-41d4-a716-446655440014', 'role:edit', '编辑角色', 'BUTTON', '["read"]', 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+  ('550e8400-e29b-41d4-a716-446655440015', 'role:delete', '删除角色', 'BUTTON', '["read"]', 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+  ('550e8400-e29b-41d4-a716-446655440016', 'role:assign', '分配权限', 'BUTTON', '["read"]', 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+  ('550e8400-e29b-41d4-a716-446655440017', 'department:create', '创建部门', 'BUTTON', '["read"]', 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+  ('550e8400-e29b-41d4-a716-446655440018', 'department:edit', '编辑部门', 'BUTTON', '["read"]', 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+  ('550e8400-e29b-41d4-a716-446655440019', 'department:delete', '删除部门', 'BUTTON', '["read"]', 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+  
+  -- API类型权限（可以有create、read、update、delete操作）
+  ('550e8400-e29b-41d4-a716-446655440020', 'api:user:list', '获取用户列表', 'API', '["read"]', 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+  ('550e8400-e29b-41d4-a716-446655440021', 'api:user:create', '创建用户', 'API', '["create"]', 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+  ('550e8400-e29b-41d4-a716-446655440022', 'api:user:update', '更新用户', 'API', '["update"]', 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+  ('550e8400-e29b-41d4-a716-446655440023', 'api:user:delete', '删除用户', 'API', '["delete"]', 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+  ('550e8400-e29b-41d4-a716-446655440024', 'api:role:list', '获取角色列表', 'API', '["read"]', 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+  ('550e8400-e29b-41d4-a716-446655440025', 'api:role:create', '创建角色', 'API', '["create"]', 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+  ('550e8400-e29b-41d4-a716-446655440026', 'api:role:update', '更新角色', 'API', '["update"]', 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+  ('550e8400-e29b-41d4-a716-446655440027', 'api:role:delete', '删除角色', 'API', '["delete"]', 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+  ('550e8400-e29b-41d4-a716-446655440028', 'api:permission:list', '获取权限列表', 'API', '["read"]', 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+  ('550e8400-e29b-41d4-a716-446655440029', 'api:department:list', '获取部门列表', 'API', '["read"]', 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+  ('550e8400-e29b-41d4-a716-446655440030', 'api:department:create', '创建部门', 'API', '["create"]', 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+  ('550e8400-e29b-41d4-a716-446655440031', 'api:department:update', '更新部门', 'API', '["update"]', 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+  ('550e8400-e29b-41d4-a716-446655440032', 'api:department:delete', '删除部门', 'API', '["delete"]', 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
   RETURNING permission_id
 )
 SELECT 1;
@@ -167,3 +196,10 @@ SELECT
 FROM uac.users u
 WHERE u.status = 'ACTIVE'
 LIMIT 10;
+
+-- 插入应用端模拟数据
+INSERT INTO uac.applications (name, code, status, sso_enabled, sso_config, description) VALUES
+('人力资源管理系统', 'HRMS', 'ACTIVE', true, '{"client_id": "hrms-client", "client_secret": "hrms-secret", "redirect_uri": "http://hrms.example.com/callback"}', '公司人力资源管理系统'),
+('客户关系管理系统', 'CRM', 'ACTIVE', true, '{"client_id": "crm-client", "client_secret": "crm-secret", "redirect_uri": "http://crm.example.com/callback"}', '客户关系管理系统'),
+('办公自动化系统', 'OA', 'ACTIVE', false, NULL, '办公自动化系统'),
+('知识管理系统', 'KMS', 'DISABLED', false, NULL, '公司知识管理系统');

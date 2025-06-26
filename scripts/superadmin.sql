@@ -10,12 +10,15 @@ VALUES (
 );
 
 -- 2. 创建管理员用户（密码：123456）
-INSERT INTO uac.users (user_id, username, password_hash, email, status)
+INSERT INTO uac.users (user_id, username, password_hash, email, avatar, phone, gender, status)
 VALUES (
     '10000000-0000-0000-0000-000000000001',
     'admin',
     '$2a$10$8c90r1pL61cViUzyWnGb.OesyqAoTSuWf6pfWVhSBVvaNFnuJko9.',  -- 123456 的 bcrypt 哈希
     'admin@test.com',
+    '1fa0a3de-d1d2-406f-89f0-a9522e0c0c3a',
+    '13800138000',
+    'MALE',
     'ACTIVE'
 );
 

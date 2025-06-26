@@ -7,6 +7,8 @@ const devRoutes = require('./devRoutes');
 const uploadRoutes = require('./uploadRoutes');
 const departmentRoutes = require('./departmentRoutes');
 const captchaRoutes = require('./captchaRoutes');
+const applicationRoutes = require('./applicationRoutes');
+const applicationSsoRoutes = require('./applicationSsoRoutes');
 
 const router = new Router();
 
@@ -14,6 +16,123 @@ const router = new Router();
  * @swagger
  * components:
  *   schemas:
+ *     SSOConfig:
+ *       type: object
+ *       required:
+ *         - protocol
+ *         - redirect_uri
+ *         - salt
+ *       properties:
+ *         protocol:
+ *           type: string
+ *           enum: [SAML, CAS, OIDC, OAuth]
+ *           description: SSO使用的协议
+ *           example: "OIDC"
+ *         redirect_uri:
+ *           type: string
+ *           format: uri
+ *           description: SSO回调地址
+ *           example: "https://hrms.example.com/auth/callback"
+ *         salt:
+ *           type: string
+ *           description: SSO签名盐值，用于JWT签名
+ *           example: "sso-salt-123"
+ *         secret:
+ *           type: string
+ *           description: 基于currenttime、salt，使用 bcrypt 生成的Hash值
+ *           example: "$2a$10$xxxxx"
+ *         currentTimestample:
+ *           type: integer
+ *           description: 当前时间戳， 用于生成secret
+ *           example: 17198592000
+ *         additional_params:
+ *           type: object
+ *           description: 其他SSO协议特定的参数
+ *           additionalProperties: true
+ *           example: {
+ *             "client_id": "hrms-client",
+ *             "client_secret": "your-client-secret",
+ *             "issuer": "https://sso.example.com"
+ *           }
+ *     APIConnectConfig:
+ *       type: object
+ *       required:
+ *         - salt
+ *       properties:
+ *         app_secret:
+ *           type: string
+ *           description: 应用API私钥（由服务端根据 application_id 和 salt 生成）
+ *           example: "wLTAwMDAtMDAwMDAwMDAwMDAxIiwidXNlcm5hbWUiOiJhZG1pbiIsImlhdCI6MTc0OTE4MTAyMCwiZXhwIjoxNzQ5MjY3NDIwfQ.VOfXDBi5DeWGTsAMzRmBNfP4AikJhT6WevpupizBrm4"
+ *         salt:
+ *           type: string
+ *           description: 签名盐值
+ *           example: "random-salt-456"
+ *     APIDataScope:
+ *       type: object
+ *       description: API数据权限范围配置
+ *       additionalProperties:
+ *         type: string
+ *         enum: [all, department, self]
+ *         description: 数据权限范围
+ *       example:
+ *         user:read: "department"
+ *         user:write: "self"
+ *         department:read: "all"
+ *     Application:
+ *       type: object
+ *       properties:
+ *         application_id:
+ *           type: string
+ *           format: uuid
+ *           description: 应用ID
+ *           example: "550e8400-e29b-41d4-a716-446655440000"
+ *         name:
+ *           type: string
+ *           description: 应用名称
+ *           example: "人力资源管理系统"
+ *         code:
+ *           type: string
+ *           description: 应用编码
+ *           example: "hrms"
+ *         status:
+ *           type: string
+ *           enum: [ACTIVE, DISABLED]
+ *           description: 应用状态
+ *           example: "ACTIVE"
+ *         sso_enabled:
+ *           type: boolean
+ *           description: 是否启用SSO
+ *           example: true
+ *         sso_config:
+ *           $ref: '#/components/schemas/SSOConfig'
+ *         api_enabled:
+ *           type: boolean
+ *           description: 是否启用API服务
+ *           example: true
+ *         api_connect_config:
+ *           $ref: '#/components/schemas/APIConnectConfig'
+ *         api_data_scope:
+ *           $ref: '#/components/schemas/APIDataScope'
+ *         description:
+ *           type: string
+ *           description: 应用描述
+ *           example: "公司人力资源管理系统"
+ *         created_at:
+ *           type: string
+ *           format: date-time
+ *           description: 创建时间
+ *           example: "2024-03-21T10:00:00.000Z"
+ *         updated_at:
+ *           type: string
+ *           format: date-time
+ *           description: 更新时间
+ *           example: "2024-03-21T10:00:00.000Z"
+ *         deleted_at:
+ *           type: string
+ *           format: date-time
+ *           nullable: true
+ *           description: 删除时间
+ *           example: null
  *     User:
  *       type: object
  *       properties:
@@ -29,7 +148,7 @@ const router = new Router();
  *           type: string
  *         status:
  *           type: string
- *           enum: [ACTIVE, INACTIVE]
+ *           enum: [ACTIVE, DISABLED]
  *         created_at:
  *           type: string
  *           format: date-time
@@ -96,7 +215,7 @@ const router = new Router();
  *           example: "550e8400-e29b-41d4-a716-446655440000"
  *         status:
  *           type: string
- *           enum: [ACTIVE, INACTIVE]
+ *           enum: [ACTIVE, DISABLED]
  *           description: 权限状态
  *           example: "ACTIVE"
  *         created_at:
@@ -124,7 +243,7 @@ const router = new Router();
  *           format: uuid
  *         status:
  *           type: string
- *           enum: [ACTIVE, INACTIVE]
+ *           enum: [ACTIVE, DISABLED]
  *         description:
  *           type: string
  *         created_at:
@@ -197,5 +316,7 @@ router.use(departmentRoutes.routes());
 router.use(devRoutes.routes());
 router.use(uploadRoutes.routes());
 router.use(captchaRoutes.routes());
+router.use(applicationRoutes.routes());
+router.use(applicationSsoRoutes.routes());
 
 module.exports = router; 

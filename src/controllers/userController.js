@@ -1208,7 +1208,7 @@ class UserController {
       return;
     }
 
-    const validStatus = ['ACTIVE', 'DISABLED', 'LOCKED'];
+    const validStatus = ['ACTIVE', 'DISABLED', 'ARCHIVED'];
     if (!validStatus.includes(status)) {
       ctx.status = 400;
       ctx.body = {

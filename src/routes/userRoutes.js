@@ -54,7 +54,7 @@ const router = new Router({
  *           example: "550e8400-e29b-41d4-a716-446655440000"
  *         status:
  *           type: string
- *           enum: [ACTIVE, INACTIVE, LOCKED]
+ *           enum: [ACTIVE, DISABLED, ARCHIVED]
  *           description: 用户状态
  *           example: "ACTIVE"
  *         last_login_at:
@@ -104,7 +104,7 @@ const router = new Router({
  *           example: "系统管理员角色"
  *         status:
  *           type: string
- *           enum: [ACTIVE, INACTIVE, ARCHIVED]
+ *           enum: [ACTIVE, DISABLED, ARCHIVED]
  *           description: 角色状态
  *           example: "ACTIVE"
  *         permissions:
@@ -196,7 +196,7 @@ const router = new Router({
  *           example: "550e8400-e29b-41d4-a716-446655440000"
  *         status:
  *           type: string
- *           enum: [ACTIVE, INACTIVE]
+ *           enum: [ACTIVE, DISABLED]
  *           description: 部门状态
  *           example: "ACTIVE"
  *         created_at:
@@ -409,7 +409,7 @@ router.post('/', UserController.create);
  *         name: status
  *         schema:
  *           type: string
- *           enum: [ACTIVE, INACTIVE, LOCKED]
+ *           enum: [ACTIVE, DISABLED, ARCHIVED]
  *         description: 用户状态
  *       - in: query
  *         name: gender
@@ -634,7 +634,7 @@ router.get('/:user_id', UserController.getById);
  *                 example: "550e8400-e29b-41d4-a716-446655440000"
  *               status:
  *                 type: string
- *                 enum: [ACTIVE, INACTIVE, LOCKED]
+ *                 enum: [ACTIVE, DISABLED, ARCHIVED]
  *                 description: 用户状态
  *                 example: "ACTIVE"
  *     responses:
@@ -911,6 +911,8 @@ router.put('/:user_id/roles', UserController.assignRoles);
  *       - Users
  *     summary: 更新用户状态
  *     description: 更新指定用户的状态
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - name: user_id
  *         in: path
@@ -928,7 +930,7 @@ router.put('/:user_id/roles', UserController.assignRoles);
  *             properties:
  *               status:
  *                 type: string
- *                 enum: [ACTIVE, INACTIVE, LOCKED]
+ *                 enum: [ACTIVE, DISABLED, ARCHIVED]
  *                 description: 用户状态
  *     responses:
  *       200:

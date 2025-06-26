@@ -155,6 +155,8 @@ router.post('/', handleUploadError, uploadMiddleware, UploadController.uploadSin
  *       - Uploads
  *     summary: 上传多个文件
  *     description: 同时上传多个文件
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -213,6 +215,8 @@ router.post('/multiple', handleUploadError, uploadMiddleware, UploadController.u
  *       - Uploads
  *     summary: 上传图片
  *     description: 上传单个图片，支持压缩和格式转换
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -312,6 +316,8 @@ router.post('/image',
  *       - Uploads
  *     summary: 获取图片
  *     description: 获取指定图片，支持实时裁剪、格式转换和缓存
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: file_id

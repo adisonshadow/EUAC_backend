@@ -6,17 +6,51 @@ const logger = require('./utils/logger');
 const errorHandler = require('./middlewares/errorHandler');
 const routes = require('./routes');
 const { koaSwagger } = require('koa2-swagger-ui');
-const fs = require('fs');
-const path = require('path');
+const swaggerJSDoc = require('swagger-jsdoc');
 const healthRoutes = require('./routes/healthRoutes');
 
-// 读取 swagger.json 文件
+// Swagger 配置
+const swaggerDefinition = {
+  openapi: '3.0.0',
+  info: {
+    title: 'UAC API Documentation',
+    version: '1.0.0',
+    description: '用户认证和授权系统 API 文档',
+  },
+  servers: [
+    {
+      url: 'http://localhost:3000',
+      description: '开发服务器',
+    },
+  ],
+  components: {
+    securitySchemes: {
+      bearerAuth: {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+      },
+    },
+  },
+  security: [
+    {
+      bearerAuth: [],
+    },
+  ],
+};
+
+const options = {
+  swaggerDefinition,
+  apis: ['./src/routes/*.js'], // API 路由文件的路径
+};
+
+// 生成 Swagger 文档
 let swaggerSpec;
 try {
-  swaggerSpec = JSON.parse(fs.readFileSync(path.join(__dirname, '../swagger.json'), 'utf8'));
-  logger.info('Swagger 文档加载成功');
+  swaggerSpec = swaggerJSDoc(options);
+  logger.info('Swagger 文档生成成功');
 } catch (error) {
-  logger.error('Swagger 文档加载失败', { error: error.message });
+  logger.error('Swagger 文档生成失败', { error: error.message });
   process.exit(1);
 }
 

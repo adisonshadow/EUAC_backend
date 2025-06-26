@@ -1,6 +1,6 @@
 {
   "name": "uac-api",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "UAC REST API Service",
   "main": "src/app.js",
   "scripts": {
@@ -16,6 +16,8 @@
     "db:analyze": "bash scripts/db-maintenance.sh ANALYZE",
     "db:reindex": "bash scripts/db-maintenance.sh REINDEX",
     "db:maintenance:all": "bash scripts/db-maintenance.sh ALL",
+    "db:backup": "bash scripts/db-backup.sh",
+    "db:backup:setup-cron": "bash scripts/setup-backup-cron.sh",
     "swagger": "node scripts/generate-swagger.js"
   },
   "dependencies": {

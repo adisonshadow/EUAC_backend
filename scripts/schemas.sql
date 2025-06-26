@@ -70,7 +70,7 @@ CREATE TABLE uac.users (
     gender VARCHAR(10) CHECK(gender IN ('MALE', 'FEMALE', 'OTHER', NULL)),
     email VARCHAR(255),
     phone VARCHAR(20),
-    status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE' CHECK(status IN ('ACTIVE', 'DISABLED', 'LOCKED', 'ARCHIVED')),
+    status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE' CHECK(status IN ('ACTIVE', 'DISABLED', 'ARCHIVED')),
     department_id UUID,
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
@@ -334,7 +334,7 @@ CREATE INDEX idx_login_attempts_user_id ON uac.login_attempts(user_id);
 CREATE INDEX idx_login_attempts_attempt_time ON uac.login_attempts(attempt_time);
 
 -- 第九部分：添加表注释
-COMMENT ON COLUMN uac.users.status IS '用户状态：ACTIVE-启用, DISABLED-停用, LOCKED-锁定, ARCHIVED-离职归档';
+COMMENT ON COLUMN uac.users.status IS '用户状态：ACTIVE-启用, DISABLED-停用, ARCHIVED-离职归档';
 COMMENT ON COLUMN uac.users.email IS '用户邮箱';
 COMMENT ON COLUMN uac.users.phone IS '用户电话';
 COMMENT ON COLUMN uac.users.deleted_at IS '软删除时间';
@@ -364,3 +364,40 @@ COMMENT ON COLUMN uac.login_attempts.attempt_time IS '尝试时间';
 COMMENT ON COLUMN uac.login_attempts.ip_address IS 'IP地址';
 COMMENT ON COLUMN uac.login_attempts.user_agent IS '用户代理';
 COMMENT ON COLUMN uac.login_attempts.success IS '是否成功';
+
+-- 应用端表（含软删除）
+CREATE TABLE uac.applications (
+    application_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name VARCHAR(100) NOT NULL,
+    code VARCHAR(50) NOT NULL UNIQUE,
+    status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE' CHECK(status IN ('ACTIVE', 'DISABLED', 'ARCHIVED')),
+    sso_enabled BOOLEAN NOT NULL DEFAULT false,
+    sso_config JSONB,
+    api_enabled BOOLEAN NOT NULL DEFAULT false,
+    api_connect_config JSONB,
+    api_data_scope JSONB,
+    description TEXT,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMPTZ
+);
+
+-- 添加应用端表索引
+CREATE INDEX idx_applications_code ON uac.applications(code);
+CREATE INDEX idx_applications_status ON uac.applications(status);
+CREATE INDEX idx_applications_deleted_at ON uac.applications(deleted_at);
+
+-- 添加应用端表注释
+COMMENT ON COLUMN uac.applications.application_id IS '应用端ID';
+COMMENT ON COLUMN uac.applications.name IS '应用端名称';
+COMMENT ON COLUMN uac.applications.code IS '应用端编码（唯一）';
+COMMENT ON COLUMN uac.applications.status IS '状态：ACTIVE-启用, DISABLED-停用, ARCHIVED-归档';
+COMMENT ON COLUMN uac.applications.sso_enabled IS '是否启用SSO';
+COMMENT ON COLUMN uac.applications.sso_config IS 'SSO配置信息（JSON格式）';
+COMMENT ON COLUMN uac.applications.api_enabled IS '是否启用API服务';
+COMMENT ON COLUMN uac.applications.api_connect_config IS 'API连接配置（JSON格式，包含app_secret和salt）';
+COMMENT ON COLUMN uac.applications.api_data_scope IS 'API数据权限范围（JSON格式，包含API编码和对应的权限值）';
+COMMENT ON COLUMN uac.applications.description IS '应用端描述';
+COMMENT ON COLUMN uac.applications.created_at IS '创建时间';
+COMMENT ON COLUMN uac.applications.updated_at IS '更新时间';
+COMMENT ON COLUMN uac.applications.deleted_at IS '软删除时间';

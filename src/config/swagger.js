@@ -302,7 +302,7 @@ const options = {
                               },
                               status: {
                                 type: 'string',
-                                enum: ['ACTIVE', 'DISABLED', 'LOCKED', 'ARCHIVED'],
+                                enum: ['ACTIVE', 'DISABLED', 'ARCHIVED'],
                                 example: 'ACTIVE'
                               },
                               department_id: {
@@ -533,7 +533,7 @@ const options = {
               description: '状态',
               schema: {
                 type: 'string',
-                enum: ['active', 'inactive']
+                enum: ['active', 'DISABLED']
               }
             }
           ],
@@ -581,7 +581,7 @@ const options = {
                                 },
                                 status: {
                                   type: 'string',
-                                  enum: ['active', 'inactive'],
+                                  enum: ['active', 'DISABLED'],
                                   example: 'active'
                                 },
                                 created_at: {
@@ -655,7 +655,7 @@ const options = {
                     },
                     status: {
                       type: 'string',
-                      enum: ['active', 'inactive'],
+                      enum: ['active', 'DISABLED'],
                       default: 'active',
                       example: 'active'
                     }
@@ -699,7 +699,7 @@ const options = {
                           },
                           status: {
                             type: 'string',
-                            enum: ['active', 'inactive'],
+                            enum: ['active', 'DISABLED'],
                             example: 'active'
                           },
                           created_at: {
@@ -808,7 +808,7 @@ const options = {
                           },
                           status: {
                             type: 'string',
-                            enum: ['active', 'inactive'],
+                            enum: ['active', 'DISABLED'],
                             example: 'active'
                           },
                           created_at: {
@@ -879,7 +879,7 @@ const options = {
                     },
                     status: {
                       type: 'string',
-                      enum: ['active', 'inactive'],
+                      enum: ['active', 'DISABLED'],
                       example: 'active'
                     }
                   }
@@ -922,7 +922,7 @@ const options = {
                           },
                           status: {
                             type: 'string',
-                            enum: ['active', 'inactive'],
+                            enum: ['active', 'DISABLED'],
                             example: 'active'
                           },
                           updated_at: {
@@ -1064,7 +1064,7 @@ const options = {
               description: '状态',
               schema: {
                 type: 'string',
-                enum: ['active', 'inactive']
+                enum: ['active', 'DISABLED']
               }
             }
           ],
@@ -1116,7 +1116,7 @@ const options = {
                                 },
                                 status: {
                                   type: 'string',
-                                  enum: ['active', 'inactive'],
+                                  enum: ['active', 'DISABLED'],
                                   example: 'active'
                                 },
                                 created_at: {

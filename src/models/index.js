@@ -15,6 +15,7 @@ const DepartmentHistory = require('./department_history');
 const LoginAttempt = require('./loginAttempt');
 const Captcha = require('./captcha');
 const PasswordReset = require('./passwordReset');
+const Application = require('./application');
 
 // 设置模型关联关系
 User.belongsTo(Department, { foreignKey: 'department_id' });
@@ -59,5 +60,6 @@ module.exports = {
   DepartmentHistory,
   LoginAttempt,
   Captcha,
-  PasswordReset
+  PasswordReset,
+  Application
 }; 
