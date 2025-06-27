@@ -129,7 +129,7 @@ const router = new Router({
  *   post:
  *     tags:
  *       - Roles
- *     summary: 创建角色
+ *     summary: 创建角色 [需要认证]
  *     description: 创建新角色
  *     security:
  *       - bearerAuth: []
@@ -225,7 +225,7 @@ router.post('/', RoleController.create);
  *   get:
  *     tags:
  *       - Roles
- *     summary: 获取角色列表
+ *     summary: 获取角色列表 [需要认证]
  *     description: 获取角色列表，支持分页和筛选。当 size 参数为 -1 时，返回所有记录不分页。
  *     security:
  *       - bearerAuth: []
@@ -307,7 +307,7 @@ router.get('/', RoleController.list);
  *   get:
  *     tags:
  *       - Roles
- *     summary: 获取角色详情
+ *     summary: 获取角色详情 [需要认证]
  *     description: 获取指定角色的详细信息
  *     security:
  *       - bearerAuth: []
@@ -338,7 +338,7 @@ router.get('/:role_id', RoleController.getById);
  *   put:
  *     tags:
  *       - Roles
- *     summary: 更新角色信息
+ *     summary: 更新角色信息 [需要认证]
  *     description: 更新指定角色的信息
  *     parameters:
  *       - name: role_id
@@ -380,7 +380,7 @@ router.put('/:role_id', RoleController.update);
  *   delete:
  *     tags:
  *       - Roles
- *     summary: 删除角色
+ *     summary: 删除角色 [需要认证]
  *     description: 软删除指定角色
  *     parameters:
  *       - name: role_id
@@ -416,7 +416,7 @@ router.delete('/:role_id', RoleController.delete);
  *   post:
  *     tags:
  *       - Roles
- *     summary: 给角色分配权限
+ *     summary: 给角色分配权限 [需要认证]
  *     description: 完全替换角色的现有权限，设置新的权限列表
  *     security:
  *       - bearerAuth: []
@@ -471,7 +471,7 @@ router.post('/:role_id/permissions', RoleController.assignPermissions);
  *   put:
  *     tags:
  *       - Roles
- *     summary: 更新角色权限
+ *     summary: 更新角色权限 [需要认证]
  *     description: 更新角色的权限列表，可以添加或删除权限
  *     security:
  *       - bearerAuth: []
@@ -533,7 +533,7 @@ router.put('/:role_id/permissions', RoleController.updatePermissions);
  *   get:
  *     tags:
  *       - Roles
- *     summary: 检查用户权限
+ *     summary: 检查用户权限 [需要认证]
  *     description: 检查当前用户是否拥有指定权限
  *     security:
  *       - bearerAuth: []
@@ -570,91 +570,5 @@ router.put('/:role_id/permissions', RoleController.updatePermissions);
  *         description: 服务器错误
  */
 router.post('/check-permission', RoleController.checkUserPermission);
-
-/**
- * @swagger
- * /api/v1/dev/login:
- *   post:
- *     tags:
- *       - Dev
- *     summary: 开发环境专用登录接口
- *     description: 仅限开发环境使用的登录接口，无需验证码
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - username
- *               - password
- *             properties:
- *               username:
- *                 type: string
- *                 description: 用户名
- *               password:
- *                 type: string
- *                 description: 密码
- *     responses:
- *       200:
- *         description: 登录成功
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 code:
- *                   type: number
- *                   example: 200
- *                 message:
- *                   type: string
- *                   example: 登录成功
- *                 data:
- *                   type: object
- *                   properties:
- *                     token:
- *                       type: string
- *                       description: JWT token
- *                     user:
- *                       type: object
- *                       properties:
- *                         user_id:
- *                           type: string
- *                         username:
- *                           type: string
- *                         email:
- *                           type: string
- *                         roles:
- *                           type: array
- *                           items:
- *                             type: object
- *                             properties:
- *                               role_id:
- *                                 type: string
- *                               role_name:
- *                                 type: string
- *                               code:
- *                                 type: string
- *                               permissions:
- *                                 type: array
- *                                 items:
- *                                   type: object
- *                                   properties:
- *                                     permission_id:
- *                                       type: string
- *                                     permission_name:
- *                                       type: string
- *                                     code:
- *                                       type: string
- *       400:
- *         description: 参数错误
- *       401:
- *         description: 用户名或密码错误
- *       403:
- *         description: 非开发环境
- *       500:
- *         description: 服务器错误
- */
-router.post('/dev/login', RoleController.devLogin);
 
 module.exports = router; 

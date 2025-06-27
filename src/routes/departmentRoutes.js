@@ -10,7 +10,7 @@ const router = new Router({
  *   post:
  *     tags:
  *       - Departments
- *     summary: 创建部门
+ *     summary: 创建部门 [需要认证]
  *     description: 创建新的部门
  *     security:
  *       - bearerAuth: []
@@ -107,7 +107,7 @@ router.post('/', DepartmentController.create);
  *   get:
  *     tags:
  *       - Departments
- *     summary: 获取部门列表
+ *     summary: 获取部门列表 [需要认证]
  *     description: 获取部门列表，支持分页和筛选。当 size 参数为 -1 时，返回所有记录不分页。
  *     security:
  *       - bearerAuth: []
@@ -235,7 +235,7 @@ router.get('/tree', DepartmentController.getTree);
  *   get:
  *     tags:
  *       - Departments
- *     summary: 获取部门详情
+ *     summary: 获取部门详情 [需要认证]
  *     description: 获取指定部门的详细信息
  *     security:
  *       - bearerAuth: []
@@ -326,7 +326,7 @@ router.get('/:department_id', DepartmentController.getById);
  *   put:
  *     tags:
  *       - Departments
- *     summary: 更新部门
+ *     summary: 更新部门 [需要认证]
  *     description: 更新指定部门的信息
  *     security:
  *       - bearerAuth: []
@@ -428,7 +428,7 @@ router.put('/:department_id', DepartmentController.update);
  *   delete:
  *     tags:
  *       - Departments
- *     summary: 删除部门
+ *     summary: 删除部门 [需要认证]
  *     description: 删除指定部门
  *     security:
  *       - bearerAuth: []
@@ -490,7 +490,7 @@ router.delete('/:department_id', DepartmentController.delete);
  *   get:
  *     tags:
  *       - Departments
- *     summary: 获取部门用户
+ *     summary: 获取部门用户 [需要认证]
  *     description: 获取指定部门的所有用户
  *     security:
  *       - bearerAuth: []

@@ -231,7 +231,7 @@ const router = new Router({
  *   post:
  *     tags:
  *       - Users
- *     summary: 创建用户
+ *     summary: 创建用户 [需要认证]
  *     description: 创建新用户
  *     security:
  *       - bearerAuth: []
@@ -363,7 +363,7 @@ router.post('/', UserController.create);
  *   get:
  *     tags:
  *       - Users
- *     summary: 获取用户列表
+ *     summary: 获取用户列表 [需要认证]
  *     description: 获取用户列表，支持分页和多种筛选条件
  *     security:
  *       - bearerAuth: []
@@ -500,7 +500,7 @@ router.get('/', UserController.list);
  *   get:
  *     tags:
  *       - Users
- *     summary: 获取用户详情
+ *     summary: 获取用户详情 [需要认证]
  *     description: 获取指定用户的详细信息
  *     security:
  *       - bearerAuth: []
@@ -585,7 +585,7 @@ router.get('/:user_id', UserController.getById);
  *   put:
  *     tags:
  *       - Users
- *     summary: 更新用户信息
+ *     summary: 更新用户信息 [需要认证]
  *     description: 更新指定用户的信息
  *     security:
  *       - bearerAuth: []
@@ -710,7 +710,7 @@ router.put('/:user_id', UserController.update);
  *   delete:
  *     tags:
  *       - Users
- *     summary: 删除用户
+ *     summary: 删除用户 [需要认证]
  *     description: 删除指定用户
  *     security:
  *       - bearerAuth: []
@@ -795,7 +795,7 @@ router.delete('/:user_id', UserController.delete);
  *   put:
  *     tags:
  *       - Users
- *     summary: 更新用户角色
+ *     summary: 更新用户角色 [需要认证]
  *     description: 更新指定用户的角色
  *     security:
  *       - bearerAuth: []
@@ -909,7 +909,7 @@ router.put('/:user_id/roles', UserController.assignRoles);
  *   put:
  *     tags:
  *       - Users
- *     summary: 更新用户状态
+ *     summary: 更新用户状态 [需要认证]
  *     description: 更新指定用户的状态
  *     security:
  *       - bearerAuth: []
@@ -948,7 +948,7 @@ router.put('/:user_id/status', UserController.updateStatus);
  *   post:
  *     tags:
  *       - Users
- *     summary: 上传用户头像
+ *     summary: 上传用户头像 [需要认证]
  *     description: 上传并更新用户头像
  *     parameters:
  *       - name: user_id
@@ -987,7 +987,7 @@ router.post('/:user_id/avatar', UserController.update);
  *   post:
  *     tags:
  *       - Users
- *     summary: 恢复已删除用户
+ *     summary: 恢复已删除用户 [需要认证]
  *     description: 恢复被软删除的用户
  *     parameters:
  *       - name: user_id
@@ -1011,7 +1011,7 @@ router.post('/:user_id/restore', UserController.restore);
  *   post:
  *     tags:
  *       - Users
- *     summary: 修改密码
+ *     summary: 修改密码 [需要认证]
  *     description: 用户通过旧密码修改为新密码
  *     security:
  *       - bearerAuth: []
@@ -1132,7 +1132,7 @@ router.post('/:user_id/change-password', auth, UserController.changePassword);
  *   post:
  *     tags:
  *       - Users
- *     summary: 重置密码
+ *     summary: 重置密码 [需要认证]
  *     description: 重置用户密码
  *     requestBody:
  *       required: true

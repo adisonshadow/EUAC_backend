@@ -62,7 +62,7 @@ const handleUploadError = async (ctx, next) => {
  *   post:
  *     tags:
  *       - Uploads
- *     summary: 上传文件
+ *     summary: 上传文件 [需要认证]
  *     description: 上传单个文件，支持图片自动转换为webp格式
  *     security:
  *       - bearerAuth: []
@@ -153,7 +153,7 @@ router.post('/', handleUploadError, uploadMiddleware, UploadController.uploadSin
  *   post:
  *     tags:
  *       - Uploads
- *     summary: 上传多个文件
+ *     summary: 上传多个文件 [需要认证]
  *     description: 同时上传多个文件
  *     security:
  *       - bearerAuth: []
@@ -213,7 +213,7 @@ router.post('/multiple', handleUploadError, uploadMiddleware, UploadController.u
  *   post:
  *     tags:
  *       - Uploads
- *     summary: 上传图片
+ *     summary: 上传图片 [需要认证]
  *     description: 上传单个图片，支持压缩和格式转换
  *     security:
  *       - bearerAuth: []
@@ -369,7 +369,7 @@ router.get('/images/:file_id', UploadController.getImage);
  *   get:
  *     tags:
  *       - Uploads
- *     summary: 获取文件信息
+ *     summary: 获取文件信息 [需要认证]
  *     description: 获取指定文件的详细信息
  *     security:
  *       - bearerAuth: []
@@ -476,7 +476,7 @@ router.get('/:file_id', UploadController.getFile);
  *   delete:
  *     tags:
  *       - Uploads
- *     summary: 删除文件
+ *     summary: 删除文件 [需要认证]
  *     description: 删除指定文件
  *     security:
  *       - bearerAuth: []

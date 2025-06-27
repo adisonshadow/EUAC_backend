@@ -760,7 +760,7 @@
         "tags": [
           "Applications"
         ],
-        "summary": "创建应用",
+        "summary": "创建应用 [需要认证]",
         "description": "创建一个新的应用",
         "security": [
           {
@@ -876,7 +876,7 @@
         "tags": [
           "Applications"
         ],
-        "summary": "获取应用列表",
+        "summary": "获取应用列表 [需要认证]",
         "description": "获取应用列表，支持分页和筛选。当 size 参数为 -1 时，返回所有记录不分页。",
         "security": [
           {
@@ -995,7 +995,7 @@
         "tags": [
           "Applications"
         ],
-        "summary": "获取应用详情",
+        "summary": "获取应用详情 [需要认证]",
         "description": "根据ID获取应用详情",
         "security": [
           {
@@ -1064,7 +1064,7 @@
         "tags": [
           "Applications"
         ],
-        "summary": "更新应用",
+        "summary": "更新应用 [需要认证]",
         "description": "更新应用信息",
         "security": [
           {
@@ -1188,7 +1188,7 @@
         "tags": [
           "Applications"
         ],
-        "summary": "删除应用",
+        "summary": "删除应用 [需要认证]",
         "description": "删除指定应用",
         "security": [
           {
@@ -1256,7 +1256,7 @@
         "tags": [
           "Applications"
         ],
-        "summary": "生成应用密钥",
+        "summary": "生成应用密钥 [需要认证]",
         "description": "根据应用ID和salt生成app_secret，并保存到应用的api_connect_config中",
         "security": [
           {
@@ -1364,7 +1364,7 @@
         "tags": [
           "Applications"
         ],
-        "summary": "获取应用Token",
+        "summary": "获取应用Token [需要认证]",
         "description": "根据应用ID和app_secret获取JWT Token，用于应用API认证",
         "requestBody": {
           "required": true,
@@ -1949,7 +1949,7 @@
         "tags": [
           "Auth"
         ],
-        "summary": "刷新访问令牌",
+        "summary": "刷新访问令牌 [需要认证]",
         "description": "使用刷新令牌获取新的访问令牌，支持第三方系统通过app参数刷新token",
         "security": [
           {
@@ -2103,7 +2103,7 @@
         "tags": [
           "Auth"
         ],
-        "summary": "用户登出",
+        "summary": "用户登出 [需要认证]",
         "description": "用户登出接口，使当前访问令牌失效",
         "security": [
           {
@@ -2283,7 +2283,7 @@
         "tags": [
           "Auth"
         ],
-        "summary": "检查用户登录状态",
+        "summary": "检查用户登录状态 [需要认证]",
         "description": "检查当前用户的登录状态，支持两种使用方式：\n\n1. **标准模式**：不传任何参数，使用默认JWT密钥验证token\n2. **SSO模式**：通过query参数app传递应用ID，使用对应应用的salt验证token\n\n**使用场景**：\n- 前端应用验证用户登录状态\n- 第三方系统验证SSO token有效性\n- 获取当前登录用户的详细信息\n\n**认证方式**：Bearer Token\n\n**响应说明**：\n- 200: 用户已登录，返回用户信息\n- 400: 无效的应用ID或SSO配置（仅SSO模式）\n- 401: 未登录或token无效\n- 500: 服务器内部错误\n",
         "parameters": [
           {
@@ -2775,7 +2775,7 @@
         "tags": [
           "Departments"
         ],
-        "summary": "创建部门",
+        "summary": "创建部门 [需要认证]",
         "description": "创建新的部门",
         "security": [
           {
@@ -2912,7 +2912,7 @@
         "tags": [
           "Departments"
         ],
-        "summary": "获取部门列表",
+        "summary": "获取部门列表 [需要认证]",
         "description": "获取部门列表，支持分页和筛选。当 size 参数为 -1 时，返回所有记录不分页。",
         "security": [
           {
@@ -3098,7 +3098,7 @@
         "tags": [
           "Departments"
         ],
-        "summary": "获取部门详情",
+        "summary": "获取部门详情 [需要认证]",
         "description": "获取指定部门的详细信息",
         "security": [
           {
@@ -3225,7 +3225,7 @@
         "tags": [
           "Departments"
         ],
-        "summary": "更新部门",
+        "summary": "更新部门 [需要认证]",
         "description": "更新指定部门的信息",
         "security": [
           {
@@ -3370,7 +3370,7 @@
         "tags": [
           "Departments"
         ],
-        "summary": "删除部门",
+        "summary": "删除部门 [需要认证]",
         "description": "删除指定部门",
         "security": [
           {
@@ -3462,7 +3462,7 @@
         "tags": [
           "Departments"
         ],
-        "summary": "获取部门用户",
+        "summary": "获取部门用户 [需要认证]",
         "description": "获取指定部门的所有用户",
         "security": [
           {
@@ -3582,8 +3582,8 @@
         "tags": [
           "Dev"
         ],
-        "summary": "开发环境专用登录接口",
-        "description": "仅限开发环境使用的登录接口，无需验证码",
+        "summary": "开发环境登录 [免Captcha等额外验证]",
+        "description": "开发环境登录接口，无需验证码",
         "requestBody": {
           "required": true,
           "content": {
@@ -3619,19 +3619,19 @@
                   "type": "object",
                   "properties": {
                     "code": {
-                      "type": "number",
+                      "type": "integer",
                       "example": 200
                     },
                     "message": {
                       "type": "string",
-                      "example": "登录成功"
+                      "example": "success"
                     },
                     "data": {
                       "type": "object",
                       "properties": {
                         "token": {
                           "type": "string",
-                          "description": "JWT token",
+                          "description": "访问令牌",
                           "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
                         },
                         "refresh_token": {
@@ -3648,54 +3648,6 @@
                           "type": "string",
                           "description": "用户ID",
                           "example": "550e8400-e29b-41d4-a716-446655440000"
-                        },
-                        "user": {
-                          "type": "object",
-                          "properties": {
-                            "user_id": {
-                              "type": "string"
-                            },
-                            "username": {
-                              "type": "string"
-                            },
-                            "email": {
-                              "type": "string"
-                            },
-                            "roles": {
-                              "type": "array",
-                              "items": {
-                                "type": "object",
-                                "properties": {
-                                  "role_id": {
-                                    "type": "string"
-                                  },
-                                  "role_name": {
-                                    "type": "string"
-                                  },
-                                  "code": {
-                                    "type": "string"
-                                  },
-                                  "permissions": {
-                                    "type": "array",
-                                    "items": {
-                                      "type": "object",
-                                      "properties": {
-                                        "permission_id": {
-                                          "type": "string"
-                                        },
-                                        "permission_name": {
-                                          "type": "string"
-                                        },
-                                        "code": {
-                                          "type": "string"
-                                        }
-                                      }
-                                    }
-                                  }
-                                }
-                              }
-                            }
-                          }
                         }
                       }
                     }
@@ -3728,11 +3680,8 @@
               }
             }
           },
-          "401": {
-            "description": "用户名或密码错误"
-          },
           "403": {
-            "description": "非开发环境",
+            "description": "用户已被禁用",
             "content": {
               "application/json": {
                 "schema": {
@@ -3936,7 +3885,7 @@
         "tags": [
           "Permissions"
         ],
-        "summary": "创建权限",
+        "summary": "创建权限 [需要认证]",
         "description": "创建新的权限",
         "security": [
           {
@@ -4136,7 +4085,7 @@
         "tags": [
           "Permissions"
         ],
-        "summary": "获取权限列表",
+        "summary": "获取权限列表 [需要认证]",
         "description": "获取权限列表，支持分页和筛选。当 size 参数为 -1 时，返回所有记录不分页。",
         "security": [
           {
@@ -4268,7 +4217,7 @@
         "tags": [
           "Permissions"
         ],
-        "summary": "获取权限详情",
+        "summary": "获取权限详情 [需要认证]",
         "description": "获取指定权限的详细信息",
         "security": [
           {
@@ -4428,7 +4377,7 @@
         "tags": [
           "Permissions"
         ],
-        "summary": "更新权限",
+        "summary": "更新权限 [需要认证]",
         "description": "更新指定权限的信息",
         "security": [
           {
@@ -4553,7 +4502,7 @@
         "tags": [
           "Permissions"
         ],
-        "summary": "删除权限",
+        "summary": "删除权限 [需要认证]",
         "description": "删除指定权限",
         "parameters": [
           {
@@ -4600,7 +4549,7 @@
         "tags": [
           "Permissions"
         ],
-        "summary": "分配角色权限",
+        "summary": "分配角色权限 [需要认证]",
         "description": "为指定角色分配权限",
         "security": [
           {
@@ -4678,7 +4627,7 @@
         "tags": [
           "Permissions"
         ],
-        "summary": "获取用户权限",
+        "summary": "获取用户权限 [需要认证]",
         "description": "获取指定用户的所有权限",
         "security": [
           {
@@ -4750,7 +4699,7 @@
         "tags": [
           "Permissions"
         ],
-        "summary": "检查权限",
+        "summary": "检查权限 [需要认证]",
         "description": "检查用户是否拥有指定资源类型的多个操作权限",
         "security": [
           {
@@ -4877,7 +4826,7 @@
         "tags": [
           "Permissions"
         ],
-        "summary": "创建数据权限规则",
+        "summary": "创建数据权限规则 [需要认证]",
         "description": "创建新的数据权限规则",
         "security": [
           {
@@ -4970,7 +4919,7 @@
         "tags": [
           "Permissions"
         ],
-        "summary": "获取数据权限规则列表",
+        "summary": "获取数据权限规则列表 [需要认证]",
         "description": "获取所有数据权限规则",
         "security": [
           {
@@ -5032,7 +4981,7 @@
         "tags": [
           "Roles"
         ],
-        "summary": "创建角色",
+        "summary": "创建角色 [需要认证]",
         "description": "创建新角色",
         "security": [
           {
@@ -5170,7 +5119,7 @@
         "tags": [
           "Roles"
         ],
-        "summary": "获取角色列表",
+        "summary": "获取角色列表 [需要认证]",
         "description": "获取角色列表，支持分页和筛选。当 size 参数为 -1 时，返回所有记录不分页。",
         "security": [
           {
@@ -5289,7 +5238,7 @@
         "tags": [
           "Roles"
         ],
-        "summary": "获取角色详情",
+        "summary": "获取角色详情 [需要认证]",
         "description": "获取指定角色的详细信息",
         "security": [
           {
@@ -5329,7 +5278,7 @@
         "tags": [
           "Roles"
         ],
-        "summary": "更新角色信息",
+        "summary": "更新角色信息 [需要认证]",
         "description": "更新指定角色的信息",
         "parameters": [
           {
@@ -5384,7 +5333,7 @@
         "tags": [
           "Roles"
         ],
-        "summary": "删除角色",
+        "summary": "删除角色 [需要认证]",
         "description": "软删除指定角色",
         "parameters": [
           {
@@ -5431,7 +5380,7 @@
         "tags": [
           "Roles"
         ],
-        "summary": "给角色分配权限",
+        "summary": "给角色分配权限 [需要认证]",
         "description": "完全替换角色的现有权限，设置新的权限列表",
         "security": [
           {
@@ -5507,7 +5456,7 @@
         "tags": [
           "Roles"
         ],
-        "summary": "更新角色权限",
+        "summary": "更新角色权限 [需要认证]",
         "description": "更新角色的权限列表，可以添加或删除权限",
         "security": [
           {
@@ -5594,7 +5543,7 @@
         "tags": [
           "Roles"
         ],
-        "summary": "检查用户权限",
+        "summary": "检查用户权限 [需要认证]",
         "description": "检查当前用户是否拥有指定权限",
         "security": [
           {
@@ -5656,7 +5605,7 @@
         "tags": [
           "Uploads"
         ],
-        "summary": "上传文件",
+        "summary": "上传文件 [需要认证]",
         "description": "上传单个文件，支持图片自动转换为webp格式",
         "security": [
           {
@@ -5791,7 +5740,7 @@
         "tags": [
           "Uploads"
         ],
-        "summary": "上传多个文件",
+        "summary": "上传多个文件 [需要认证]",
         "description": "同时上传多个文件",
         "security": [
           {
@@ -5878,7 +5827,7 @@
         "tags": [
           "Uploads"
         ],
-        "summary": "上传图片",
+        "summary": "上传图片 [需要认证]",
         "description": "上传单个图片，支持压缩和格式转换",
         "security": [
           {
@@ -6084,7 +6033,7 @@
         "tags": [
           "Uploads"
         ],
-        "summary": "获取文件信息",
+        "summary": "获取文件信息 [需要认证]",
         "description": "获取指定文件的详细信息",
         "security": [
           {
@@ -6235,7 +6184,7 @@
         "tags": [
           "Uploads"
         ],
-        "summary": "删除文件",
+        "summary": "删除文件 [需要认证]",
         "description": "删除指定文件",
         "security": [
           {
@@ -6358,7 +6307,7 @@
         "tags": [
           "Users"
         ],
-        "summary": "创建用户",
+        "summary": "创建用户 [需要认证]",
         "description": "创建新用户",
         "security": [
           {
@@ -6544,7 +6493,7 @@
         "tags": [
           "Users"
         ],
-        "summary": "获取用户列表",
+        "summary": "获取用户列表 [需要认证]",
         "description": "获取用户列表，支持分页和多种筛选条件",
         "security": [
           {
@@ -6752,7 +6701,7 @@
         "tags": [
           "Users"
         ],
-        "summary": "获取用户详情",
+        "summary": "获取用户详情 [需要认证]",
         "description": "获取指定用户的详细信息",
         "security": [
           {
@@ -6873,7 +6822,7 @@
         "tags": [
           "Users"
         ],
-        "summary": "更新用户信息",
+        "summary": "更新用户信息 [需要认证]",
         "description": "更新指定用户的信息",
         "security": [
           {
@@ -7054,7 +7003,7 @@
         "tags": [
           "Users"
         ],
-        "summary": "删除用户",
+        "summary": "删除用户 [需要认证]",
         "description": "删除指定用户",
         "security": [
           {
@@ -7177,7 +7126,7 @@
         "tags": [
           "Users"
         ],
-        "summary": "更新用户角色",
+        "summary": "更新用户角色 [需要认证]",
         "description": "更新指定用户的角色",
         "security": [
           {
@@ -7346,7 +7295,7 @@
         "tags": [
           "Users"
         ],
-        "summary": "更新用户状态",
+        "summary": "更新用户状态 [需要认证]",
         "description": "更新指定用户的状态",
         "security": [
           {
@@ -7404,7 +7353,7 @@
         "tags": [
           "Users"
         ],
-        "summary": "上传用户头像",
+        "summary": "上传用户头像 [需要认证]",
         "description": "上传并更新用户头像",
         "parameters": [
           {
@@ -7456,7 +7405,7 @@
         "tags": [
           "Users"
         ],
-        "summary": "恢复已删除用户",
+        "summary": "恢复已删除用户 [需要认证]",
         "description": "恢复被软删除的用户",
         "parameters": [
           {
@@ -7485,7 +7434,7 @@
         "tags": [
           "Users"
         ],
-        "summary": "修改密码",
+        "summary": "修改密码 [需要认证]",
         "description": "用户通过旧密码修改为新密码",
         "security": [
           {
@@ -7660,7 +7609,7 @@
         "tags": [
           "Users"
         ],
-        "summary": "重置密码",
+        "summary": "重置密码 [需要认证]",
         "description": "重置用户密码",
         "requestBody": {
           "required": true,

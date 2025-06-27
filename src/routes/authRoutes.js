@@ -207,7 +207,7 @@ router.post('/login', authController.login);
  *   post:
  *     tags:
  *       - Auth
- *     summary: 刷新访问令牌
+ *     summary: 刷新访问令牌 [需要认证]
  *     description: 使用刷新令牌获取新的访问令牌，支持第三方系统通过app参数刷新token
  *     security:
  *       - bearerAuth: []
@@ -315,7 +315,7 @@ router.post('/refresh', authController.refreshToken);
  *   post:
  *     tags:
  *       - Auth
- *     summary: 用户登出
+ *     summary: 用户登出 [需要认证]
  *     description: 用户登出接口，使当前访问令牌失效
  *     security:
  *       - bearerAuth: []
@@ -444,8 +444,8 @@ router.get('/captcha', authController.getCaptcha);
  *   get:
  *     tags:
  *       - Auth
- *     summary: 检查用户登录状态
- *     description: |
+ *     summary: 检查用户登录状态 [需要认证]
+ *     description: | 
  *       检查当前用户的登录状态，支持两种使用方式：
  *       
  *       1. **标准模式**：不传任何参数，使用默认JWT密钥验证token
@@ -470,7 +470,7 @@ router.get('/captcha', authController.getCaptcha);
  *           type: string
  *           format: uuid
  *         required: false
- *         description: |
+ *         description: | 
  *           应用ID，用于SSO模式下的token验证
  *           
  *           **使用场景**：

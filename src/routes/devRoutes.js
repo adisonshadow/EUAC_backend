@@ -10,7 +10,7 @@ const router = new Router({
  *   post:
  *     tags:
  *       - Dev
- *     summary: 开发环境登录
+ *     summary: 开发环境登录 [免Captcha等额外验证]
  *     description: 开发环境登录接口，无需验证码
  *     requestBody:
  *       required: true

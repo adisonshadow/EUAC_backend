@@ -10,7 +10,7 @@ const router = new Router({
  *   post:
  *     tags:
  *       - Applications
- *     summary: 创建应用
+ *     summary: 创建应用 [需要认证]
  *     description: 创建一个新的应用
  *     security:
  *       - bearerAuth: []
@@ -92,7 +92,7 @@ router.post('/', ApplicationController.create);
  *   get:
  *     tags:
  *       - Applications
- *     summary: 获取应用列表
+ *     summary: 获取应用列表 [需要认证] 
  *     description: 获取应用列表，支持分页和筛选。当 size 参数为 -1 时，返回所有记录不分页。
  *     security:
  *       - bearerAuth: []
@@ -174,7 +174,7 @@ router.get('/', ApplicationController.list);
  *   get:
  *     tags:
  *       - Applications
- *     summary: 获取应用详情
+ *     summary: 获取应用详情 [需要认证]
  *     description: 根据ID获取应用详情
  *     security:
  *       - bearerAuth: []
@@ -223,7 +223,7 @@ router.get('/:id', ApplicationController.getById);
  *   put:
  *     tags:
  *       - Applications
- *     summary: 更新应用
+ *     summary: 更新应用 [需要认证]
  *     description: 更新应用信息
  *     security:
  *       - bearerAuth: []
@@ -310,8 +310,8 @@ router.put('/:id', ApplicationController.update);
  *   delete:
  *     tags:
  *       - Applications
- *     summary: 删除应用
- *     description: 删除指定应用
+ *     summary: 删除应用 [需要认证]
+ *     description: 删除指定应用 
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -357,7 +357,7 @@ router.delete('/:id', ApplicationController.delete);
  *   post:
  *     tags:
  *       - Applications
- *     summary: 生成应用密钥
+ *     summary: 生成应用密钥 [需要认证]
  *     description: 根据应用ID和salt生成app_secret，并保存到应用的api_connect_config中
  *     security:
  *       - bearerAuth: []
@@ -430,7 +430,7 @@ router.post('/:id/generate-secret', ApplicationController.generateSecret);
  *   post:
  *     tags:
  *       - Applications
- *     summary: 获取应用Token
+ *     summary: 获取应用Token [需要认证]
  *     description: 根据应用ID和app_secret获取JWT Token，用于应用API认证
  *     requestBody:
  *       required: true

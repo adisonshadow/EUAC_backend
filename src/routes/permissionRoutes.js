@@ -10,7 +10,7 @@ const router = new Router({
  *   post:
  *     tags:
  *       - Permissions
- *     summary: 创建权限
+ *     summary: 创建权限 [需要认证]
  *     description: 创建新的权限
  *     security:
  *       - bearerAuth: []
@@ -140,7 +140,7 @@ router.post('/', PermissionController.create);
  *   get:
  *     tags:
  *       - Permissions
- *     summary: 获取权限列表
+ *     summary: 获取权限列表 [需要认证]
  *     description: 获取权限列表，支持分页和筛选。当 size 参数为 -1 时，返回所有记录不分页。
  *     security:
  *       - bearerAuth: []
@@ -228,7 +228,7 @@ router.get('/', PermissionController.list);
  *   get:
  *     tags:
  *       - Permissions
- *     summary: 获取权限详情
+ *     summary: 获取权限详情 [需要认证]
  *     description: 获取指定权限的详细信息
  *     security:
  *       - bearerAuth: []
@@ -338,7 +338,7 @@ router.get('/:permission_id', PermissionController.getById);
  *   put:
  *     tags:
  *       - Permissions
- *     summary: 更新权限
+ *     summary: 更新权限 [需要认证]
  *     description: 更新指定权限的信息
  *     security:
  *       - bearerAuth: []
@@ -418,7 +418,7 @@ router.put('/:permission_id', PermissionController.update);
  *   delete:
  *     tags:
  *       - Permissions
- *     summary: 删除权限
+ *     summary: 删除权限 [需要认证]
  *     description: 删除指定权限
  *     parameters:
  *       - name: permission_id
@@ -454,7 +454,7 @@ router.delete('/:permission_id', PermissionController.delete);
  *   post:
  *     tags:
  *       - Permissions
- *     summary: 分配角色权限
+ *     summary: 分配角色权限 [需要认证]
  *     description: 为指定角色分配权限
  *     security:
  *       - bearerAuth: []
@@ -509,7 +509,7 @@ router.post('/:permission_id/roles', PermissionController.assignRole);
  *   get:
  *     tags:
  *       - Permissions
- *     summary: 获取用户权限
+ *     summary: 获取用户权限 [需要认证]
  *     description: 获取指定用户的所有权限
  *     security:
  *       - bearerAuth: []
@@ -560,7 +560,7 @@ router.get('/users/:user_id', PermissionController.getUserPermissions);
  *   get:
  *     tags:
  *       - Permissions
- *     summary: 检查权限
+ *     summary: 检查权限 [需要认证]
  *     description: 检查用户是否拥有指定资源类型的多个操作权限
  *     security:
  *       - bearerAuth: []
@@ -647,7 +647,7 @@ router.get('/check', PermissionController.checkPermission);
  *   post:
  *     tags:
  *       - Permissions
- *     summary: 创建数据权限规则
+ *     summary: 创建数据权限规则 [需要认证]
  *     description: 创建新的数据权限规则
  *     security:
  *       - bearerAuth: []
@@ -714,7 +714,7 @@ router.post('/rules', PermissionController.createRule);
  *   get:
  *     tags:
  *       - Permissions
- *     summary: 获取数据权限规则列表
+ *     summary: 获取数据权限规则列表 [需要认证]
  *     description: 获取所有数据权限规则
  *     security:
  *       - bearerAuth: []
