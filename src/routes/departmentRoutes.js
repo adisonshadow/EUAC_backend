@@ -1,5 +1,6 @@
 const Router = require('koa-router');
 const DepartmentController = require('../controllers/departmentController');
+const auth = require('../middlewares/auth');
 const router = new Router({
   prefix: '/api/v1/departments'
 });
@@ -99,7 +100,7 @@ const router = new Router({
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.post('/', DepartmentController.create);
+router.post('/', auth, DepartmentController.create);
 
 /**
  * @swagger
@@ -181,7 +182,7 @@ router.post('/', DepartmentController.create);
  *       500:
  *         description: 服务器错误
  */
-router.get('/', DepartmentController.list);
+router.get('/', auth, DepartmentController.list);
 
 /**
  * @swagger
@@ -227,7 +228,7 @@ router.get('/', DepartmentController.list);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.get('/tree', DepartmentController.getTree);
+router.get('/tree', auth, DepartmentController.getTree);
 
 /**
  * @swagger
@@ -318,7 +319,7 @@ router.get('/tree', DepartmentController.getTree);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.get('/:department_id', DepartmentController.getById);
+router.get('/:department_id', auth, DepartmentController.getById);
 
 /**
  * @swagger
@@ -420,7 +421,7 @@ router.get('/:department_id', DepartmentController.getById);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.put('/:department_id', DepartmentController.update);
+router.put('/:department_id', auth, DepartmentController.update);
 
 /**
  * @swagger
@@ -482,7 +483,7 @@ router.put('/:department_id', DepartmentController.update);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.delete('/:department_id', DepartmentController.delete);
+router.delete('/:department_id', auth, DepartmentController.delete);
 
 /**
  * @swagger
@@ -565,7 +566,7 @@ router.delete('/:department_id', DepartmentController.delete);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.get('/:department_id/users', DepartmentController.getMembers);
+router.get('/:department_id/users', auth, DepartmentController.getMembers);
 
 /**
  * @swagger

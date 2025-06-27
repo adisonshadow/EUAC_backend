@@ -355,7 +355,7 @@ const router = new Router({
  *                   type: null
  *                   example: null
  */
-router.post('/', UserController.create);
+router.post('/', auth, UserController.create);
 
 /**
  * @swagger
@@ -492,7 +492,7 @@ router.post('/', UserController.create);
  *                   type: null
  *                   example: null
  */
-router.get('/', UserController.list);
+router.get('/', auth, UserController.list);
 
 /**
  * @swagger
@@ -577,7 +577,7 @@ router.get('/', UserController.list);
  *                   type: null
  *                   example: null
  */
-router.get('/:user_id', UserController.getById);
+router.get('/:user_id', auth, UserController.getById);
 
 /**
  * @swagger
@@ -702,7 +702,7 @@ router.get('/:user_id', UserController.getById);
  *                   type: null
  *                   example: null
  */
-router.put('/:user_id', UserController.update);
+router.put('/:user_id', auth, UserController.update);
 
 /**
  * @swagger
@@ -787,7 +787,7 @@ router.put('/:user_id', UserController.update);
  *                   type: null
  *                   example: null
  */
-router.delete('/:user_id', UserController.delete);
+router.delete('/:user_id', auth, UserController.delete);
 
 /**
  * @swagger
@@ -901,7 +901,7 @@ router.delete('/:user_id', UserController.delete);
  *                   type: null
  *                   example: null
  */
-router.put('/:user_id/roles', UserController.assignRoles);
+router.put('/:user_id/roles', auth, UserController.assignRoles);
 
 /**
  * @swagger
@@ -940,7 +940,7 @@ router.put('/:user_id/roles', UserController.assignRoles);
  *       500:
  *         description: 服务器错误
  */
-router.put('/:user_id/status', UserController.updateStatus);
+router.put('/:user_id/status', auth, UserController.updateStatus);
 
 /**
  * @swagger
@@ -979,7 +979,7 @@ router.put('/:user_id/status', UserController.updateStatus);
  *       500:
  *         description: 服务器错误
  */
-router.post('/:user_id/avatar', UserController.update);
+router.post('/:user_id/avatar', auth, UserController.update);
 
 /**
  * @swagger
@@ -1003,7 +1003,7 @@ router.post('/:user_id/avatar', UserController.update);
  *       500:
  *         description: 服务器错误
  */
-router.post('/:user_id/restore', UserController.restore);
+router.post('/:user_id/restore', auth, UserController.restore);
 
 /**
  * @swagger

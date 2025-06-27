@@ -15,11 +15,11 @@ class AuthController {
    * 用户登录 
    */
   static async login(ctx) {
-    const { username, password, captcha_data, application_id, dev } = ctx.request.body;
+    const { username, password, captcha_data, application_id } = ctx.request.body;
     const captcha_id = captcha_data?.captcha_id;
 
     try {
-      logger.debug('User login attempt', { username, application_id, dev });
+      logger.debug('User login attempt', { username, application_id });
       
       if (!username || !password) {
         const error = new CustomValidationError('用户名和密码不能为空');
@@ -27,107 +27,95 @@ class AuthController {
         throw error;
       }
 
-      // 开发环境下的 dev 模式，跳过验证码和登录限制检查
-      const isDevMode = dev && process.env.NODE_ENV === 'development';
-      
-      if (!isDevMode) {
-        // 检查是否需要验证码
-        if (config.api.loginVerify.enabled) {
-          // 如果没有提供验证码ID，返回需要验证码的响应
-          if (!captcha_id) {
-            ctx.status = 202;
-            ctx.body = {
-              code: 202,
-              message: '需要验证码',
-              data: {
-                need_captcha: true
-              }
-            };
-            return;
-          }
-
-          // 验证验证码
-          const captcha = await Captcha.findOne({
-            where: {
-              captcha_id,
-              status: 'USED',
-              verified_at: {
-                [Op.not]: null
-              }
+      // 检查是否需要验证码
+      if (config.api.loginVerify.enabled) {
+        // 如果没有提供验证码ID，返回需要验证码的响应
+        if (!captcha_id) {
+          ctx.status = 202;
+          ctx.body = {
+            code: 202,
+            message: '需要验证码',
+            data: {
+              need_captcha: true
             }
-          });
-
-          if (!captcha) {
-            ctx.status = 400;
-            ctx.body = {
-              code: 400,
-              message: '验证码无效或未验证',
-              data: null
-            };
-            return;
-          }
-
-          // 验证通过后删除验证码记录
-          await captcha.destroy();
-          logger.debug('Captcha record deleted after successful verification', { captcha_id });
+          };
+          return;
         }
 
-        // 检查登录限制
-        const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
-        
-        // 先查找用户
-        const user = await User.findOne({
-          where: { username },
-          attributes: ['user_id', 'username', 'password_hash', 'status', 'deleted_at'],
-          paranoid: false  // 包括已删除的记录
+        // 验证验证码
+        const captcha = await Captcha.findOne({
+          where: {
+            captcha_id,
+            status: 'USED',
+            verified_at: {
+              [Op.not]: null
+            }
+          }
         });
 
-        // 如果用户存在，检查登录限制
-        if (user) {
-          const recentAttempts = await LoginAttempt.count({
-            where: {
-              user_id: user.user_id,
-              attempt_time: {
-                [Op.gte]: oneHourAgo
-              },
-              success: false
-            }
-          });
-
-          if (recentAttempts >= 5) {
-            const nextAttemptTime = new Date(Date.now() + 60 * 60 * 1000);
-            ctx.status = 429;
-            ctx.body = {
-              code: 429,
-              message: '登录失败次数过多，请一小时后重试',
-              data: {
-                next_attempt_time: nextAttemptTime.toISOString()
-              }
-            };
-            return;
-          }
+        if (!captcha) {
+          ctx.status = 400;
+          ctx.body = {
+            code: 400,
+            message: '验证码无效或未验证',
+            data: null
+          };
+          return;
         }
 
-        // 记录登录尝试
-        const loginAttempt = {
-          ip_address: ctx.ip,
-          user_agent: ctx.headers['user-agent'],
-          success: false
-        };
-
-        if (user) {
-          loginAttempt.user_id = user.user_id;
-        }
-
-        await LoginAttempt.create(loginAttempt);
+        // 验证通过后删除验证码记录
+        await captcha.destroy();
+        logger.debug('Captcha record deleted after successful verification', { captcha_id });
       }
 
-      // 查找用户
+      // 检查登录限制
+      const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+      
+      // 先查找用户
       const user = await User.findOne({
         where: { username },
         attributes: ['user_id', 'username', 'password_hash', 'status', 'deleted_at'],
         paranoid: false  // 包括已删除的记录
       });
+
+      // 如果用户存在，检查登录限制
+      if (user) {
+        const recentAttempts = await LoginAttempt.count({
+          where: {
+            user_id: user.user_id,
+            attempt_time: {
+              [Op.gte]: oneHourAgo
+            },
+            success: false
+          }
+        });
+
+        if (recentAttempts >= 5) {
+          const nextAttemptTime = new Date(Date.now() + 60 * 60 * 1000);
+          ctx.status = 429;
+          ctx.body = {
+            code: 429,
+            message: '登录失败次数过多，请一小时后重试',
+            data: {
+              next_attempt_time: nextAttemptTime.toISOString()
+            }
+          };
+          return;
+        }
+      }
+
+      // 记录登录尝试
+      const loginAttempt = {
+        ip_address: ctx.ip,
+        user_agent: ctx.headers['user-agent'],
+        success: false
+      };
+
+      if (user) {
+        loginAttempt.user_id = user.user_id;
+      }
+
+      await LoginAttempt.create(loginAttempt);
 
       if (!user) {
         const error = new UnauthorizedError('用户名或密码错误');
@@ -170,8 +158,8 @@ class AuthController {
       const isValid = await bcrypt.compare(password, user.password_hash);
       logger.debug('Password validation', { isValid });
 
-      // 如果不是 dev 模式，更新登录尝试的成功状态
-      if (!isDevMode && isValid) {
+      // 更新登录尝试的成功状态
+      if (isValid) {
         await LoginAttempt.update(
           { success: true },
           {
@@ -198,7 +186,7 @@ class AuthController {
         return;
       }
 
-      logger.debug('User logged in successfully', { username, isDevMode });
+      logger.debug('User logged in successfully', { username });
 
       // 如果提供了 application_id，获取应用的 SSO 配置
       let jwtSecret = config.api.security.jwtSecret;
@@ -281,6 +269,7 @@ class AuthController {
       throw error;
     }
   }
+
   /**
    * 刷新令牌
    */
@@ -518,6 +507,105 @@ class AuthController {
     }
   }
 
+  // 开发环境专用登录（无需验证码）
+  static async devLogin(ctx) {
+    // 检查是否为开发环境
+    if (process.env.NODE_ENV !== 'development') {
+      ctx.status = 403;
+      ctx.body = {
+        code: 403,
+        message: '此接口仅限开发环境使用'
+      };
+      return;
+    }
+
+    const { username, password } = ctx.request.body;
+
+    if (!username || !password) {
+      ctx.status = 400;
+      ctx.body = {
+        code: 400,
+        message: '用户名和密码不能为空'
+      };
+      return;
+    }
+
+    try {
+      // 查找用户
+      const user = await User.findOne({
+        where: { username },
+        attributes: ['user_id', 'username', 'password_hash', 'email', 'status'],
+      });
+
+      if (!user) {
+        ctx.status = 401;
+        ctx.body = {
+          code: 401,
+          message: '用户名或密码错误'
+        };
+        return;
+      }
+
+      // 验证密码（这里假设密码已经加密存储）
+      const isValidPassword = await user.verifyPassword(password);
+      if (!isValidPassword) {
+        ctx.status = 401;
+        ctx.body = {
+          code: 401,
+          message: '用户名或密码错误'
+        };
+        return;
+      }
+
+      // 生成 JWT token
+      const token = jwt.sign(
+        {
+          user_id: user.user_id,
+          username: user.username,
+          roles: user.Roles.map(role => role.code)
+        },
+        config.jwt.secret,
+        { expiresIn: config.jwt.expiresIn }
+      );
+
+      // 返回用户信息和token
+      ctx.status = 200;
+      ctx.body = {
+        code: 200,
+        message: '登录成功',
+        data: {
+          token,
+          user: {
+            user_id: user.user_id,
+            username: user.username,
+            email: user.email,
+            roles: user.Roles.map(role => ({
+              role_id: role.role_id,
+              role_name: role.role_name,
+              code: role.code,
+              permissions: role.Permissions.map(permission => ({
+                permission_id: permission.permission_id,
+                permission_name: permission.permission_name,
+                code: permission.code
+              }))
+            }))
+          }
+        }
+      };
+    } catch (error) {
+      console.error('开发环境登录失败:', error);
+      console.error('错误详情:', {
+        name: error.name,
+        message: error.message,
+        stack: error.stack
+      });
+      ctx.status = 500;
+      ctx.body = {
+        code: 500,
+        message: '登录失败'
+      };
+    }
+  }
 }
 
 module.exports = AuthController; 

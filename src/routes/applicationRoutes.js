@@ -1,5 +1,6 @@
 const Router = require('koa-router');
 const ApplicationController = require('../controllers/applicationController');
+const auth = require('../middlewares/auth');
 const router = new Router({
   prefix: '/api/v1/applications'
 });
@@ -84,7 +85,7 @@ const router = new Router({
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.post('/', ApplicationController.create);
+router.post('/', auth, ApplicationController.create);
 
 /**
  * @swagger
@@ -166,7 +167,7 @@ router.post('/', ApplicationController.create);
  *       500:
  *         description: 服务器错误
  */
-router.get('/', ApplicationController.list);
+router.get('/', auth, ApplicationController.list);
 
 /**
  * @swagger
@@ -215,7 +216,7 @@ router.get('/', ApplicationController.list);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.get('/:id', ApplicationController.getById);
+router.get('/:id', auth, ApplicationController.getById);
 
 /**
  * @swagger
@@ -302,7 +303,7 @@ router.get('/:id', ApplicationController.getById);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.put('/:id', ApplicationController.update);
+router.put('/:id', auth, ApplicationController.update);
 
 /**
  * @swagger
@@ -349,7 +350,7 @@ router.put('/:id', ApplicationController.update);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.delete('/:id', ApplicationController.delete);
+router.delete('/:id', auth, ApplicationController.delete);
 
 /**
  * @swagger
@@ -422,7 +423,7 @@ router.delete('/:id', ApplicationController.delete);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.post('/:id/generate-secret', ApplicationController.generateSecret);
+router.post('/:id/generate-secret', auth, ApplicationController.generateSecret);
 
 /**
  * @swagger
@@ -497,6 +498,6 @@ router.post('/:id/generate-secret', ApplicationController.generateSecret);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.post('/token', ApplicationController.getToken);
+router.post('/token', auth, ApplicationController.getToken);
 
 module.exports = router; 

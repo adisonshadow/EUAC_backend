@@ -1,5 +1,6 @@
 const Router = require('koa-router');
 const PermissionController = require('../controllers/permissionController');
+const auth = require('../middlewares/auth');
 const router = new Router({
   prefix: '/api/v1/permissions'
 });
@@ -132,7 +133,7 @@ const router = new Router({
  *                   type: null
  *                   example: null
  */
-router.post('/', PermissionController.create);
+router.post('/', auth, PermissionController.create);
 
 /**
  * @swagger
@@ -220,7 +221,7 @@ router.post('/', PermissionController.create);
  *       500:
  *         description: 服务器错误
  */
-router.get('/', PermissionController.list);
+router.get('/', auth, PermissionController.list);
 
 /**
  * @swagger
@@ -330,7 +331,7 @@ router.get('/', PermissionController.list);
  *                   type: null
  *                   example: null
  */
-router.get('/:permission_id', PermissionController.getById);
+router.get('/:permission_id', auth, PermissionController.getById);
 
 /**
  * @swagger
@@ -410,7 +411,7 @@ router.get('/:permission_id', PermissionController.getById);
  *       500:
  *         description: 服务器错误
  */
-router.put('/:permission_id', PermissionController.update);
+router.put('/:permission_id', auth, PermissionController.update);
 
 /**
  * @swagger
@@ -446,7 +447,7 @@ router.put('/:permission_id', PermissionController.update);
  *       500:
  *         description: 服务器错误
  */
-router.delete('/:permission_id', PermissionController.delete);
+router.delete('/:permission_id', auth, PermissionController.delete);
 
 /**
  * @swagger
@@ -501,7 +502,7 @@ router.delete('/:permission_id', PermissionController.delete);
  *       500:
  *         description: 服务器错误
  */
-router.post('/:permission_id/roles', PermissionController.assignRole);
+router.post('/:permission_id/roles', auth, PermissionController.assignRole);
 
 /**
  * @swagger
@@ -552,7 +553,7 @@ router.post('/:permission_id/roles', PermissionController.assignRole);
  *       500:
  *         description: 服务器错误
  */
-router.get('/users/:user_id', PermissionController.getUserPermissions);
+router.get('/users/:user_id', auth, PermissionController.getUserPermissions);
 
 /**
  * @swagger
@@ -639,7 +640,7 @@ router.get('/users/:user_id', PermissionController.getUserPermissions);
  *       500:
  *         description: 服务器错误
  */
-router.get('/check', PermissionController.checkPermission);
+router.get('/check', auth, PermissionController.checkPermission);
 
 /**
  * @swagger
@@ -706,7 +707,7 @@ router.get('/check', PermissionController.checkPermission);
  *       500:
  *         description: 服务器错误
  */
-router.post('/rules', PermissionController.createRule);
+router.post('/rules', auth, PermissionController.createRule);
 
 /**
  * @swagger
@@ -750,6 +751,6 @@ router.post('/rules', PermissionController.createRule);
  *       500:
  *         description: 服务器错误
  */
-router.get('/rules', PermissionController.getRules);
+router.get('/rules', auth, PermissionController.getRules);
 
 module.exports = router; 

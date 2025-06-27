@@ -31,6 +31,12 @@ const router = new Router({ prefix: '/api/v1/auth' });
  *                 description: 密码
  *                 example: 123456
  *               application_id:
+ *               dev:
+ *                 type: boolean
+ *                 description: 开发模式标志，在开发环境下设置为true可跳过验证码和登录限制检查
+ *                 example: true
+ *                 default: false
+ *               application_id:
  *                 type: string
  *                 format: uuid
  *                 description: 应用ID，如果提供则返回该应用的SSO配置
@@ -81,6 +87,12 @@ const router = new Router({ prefix: '/api/v1/auth' });
  *                       description: SSO配置信息（仅当提供application_id且应用启用了SSO时返回）
  *                       properties:
  *                         application_id:
+ *               dev:
+ *                 type: boolean
+ *                 description: 开发模式标志，在开发环境下设置为true可跳过验证码和登录限制检查
+ *                 example: true
+ *                 default: false
+ *               application_id:
  *                           type: string
  *                           format: uuid
  *                           description: 应用ID
@@ -207,7 +219,7 @@ router.post('/login', authController.login);
  *   post:
  *     tags:
  *       - Auth
- *     summary: 刷新访问令牌
+ *     summary: 刷新访问令牌 [需要认证]
  *     description: 使用刷新令牌获取新的访问令牌，支持第三方系统通过app参数刷新token
  *     security:
  *       - bearerAuth: []
@@ -307,7 +319,7 @@ router.post('/login', authController.login);
  *                   type: null
  *                   example: null
  */
-router.post('/refresh', authController.refreshToken);
+router.post('/refresh', auth, authController.refreshToken);
 
 /**
  * @swagger
@@ -315,7 +327,7 @@ router.post('/refresh', authController.refreshToken);
  *   post:
  *     tags:
  *       - Auth
- *     summary: 用户登出
+ *     summary: 用户登出 [需要认证]
  *     description: 用户登出接口，使当前访问令牌失效
  *     security:
  *       - bearerAuth: []
@@ -380,7 +392,7 @@ router.post('/refresh', authController.refreshToken);
  *                   type: null
  *                   example: null
  */
-router.post('/logout', authController.logout);
+router.post('/logout', auth, authController.logout);
 
 /**
  * @swagger
@@ -444,8 +456,44 @@ router.get('/captcha', authController.getCaptcha);
  *   get:
  *     tags:
  *       - Auth
- *     summary: 检查用户登录状态
- *     description: 检查当前用户的登录状态，支持第三方系统通过app参数验证token
+ *     summary: 检查用户登录状态 [需要认证]
+ *     description: | 
+ *       检查当前用户的登录状态，支持两种使用方式：
+ *       
+ *       1. **标准模式**：不传任何参数，使用默认JWT密钥验证token
+ *       2. **SSO模式**：通过query参数app传递应用ID，使用对应应用的salt验证token
+ *       
+ *       **使用场景**：
+ *       - 前端应用验证用户登录状态
+ *       - 第三方系统验证SSO token有效性
+ *       - 获取当前登录用户的详细信息
+ *       
+ *       **认证方式**：Bearer Token
+ *       
+ *       **响应说明**：
+ *       - 200: 用户已登录，返回用户信息
+ *       - 400: 无效的应用ID或SSO配置（仅SSO模式）
+ *       - 401: 未登录或token无效
+ *       - 500: 服务器内部错误
+ *     parameters:
+ *       - in: query
+ *         name: app
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         required: false
+ *         description: | 
+ *           应用ID，用于SSO模式下的token验证
+ *           
+ *           **使用场景**：
+ *           - 第三方系统需要验证特定应用的token
+ *           - 使用应用特定的salt进行JWT验证
+ *           
+ *           **注意事项**：
+ *           - 应用必须已启用SSO功能
+ *           - 应用必须配置有效的salt
+ *           - 不传此参数时使用默认JWT密钥验证
+ *         example: "550e8400-e29b-41d4-a716-446655440000"
  *     security:
  *       - bearerAuth: []
  *     responses:

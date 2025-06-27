@@ -1,5 +1,6 @@
 const Router = require('koa-router');
 const RoleController = require('../controllers/roleController');
+const auth = require('../middlewares/auth');
 const router = new Router({
   prefix: '/api/v1/roles'
 });
@@ -217,7 +218,7 @@ const router = new Router({
  *                   type: null
  *                   example: null
  */
-router.post('/', RoleController.create);
+router.post('/', auth, RoleController.create);
 
 /**
  * @swagger
@@ -299,7 +300,7 @@ router.post('/', RoleController.create);
  *       500:
  *         description: 服务器错误
  */
-router.get('/', RoleController.list);
+router.get('/', auth, RoleController.list);
 
 /**
  * @swagger
@@ -330,7 +331,7 @@ router.get('/', RoleController.list);
  *       500:
  *         description: 服务器错误
  */
-router.get('/:role_id', RoleController.getById);
+router.get('/:role_id', auth, RoleController.getById);
 
 /**
  * @swagger
@@ -372,7 +373,7 @@ router.get('/:role_id', RoleController.getById);
  *       500:
  *         description: 服务器错误
  */
-router.put('/:role_id', RoleController.update);
+router.put('/:role_id', auth, RoleController.update);
 
 /**
  * @swagger
@@ -408,7 +409,7 @@ router.put('/:role_id', RoleController.update);
  *       500:
  *         description: 服务器错误
  */
-router.delete('/:role_id', RoleController.delete);
+router.delete('/:role_id', auth, RoleController.delete);
 
 /**
  * @swagger
@@ -463,7 +464,7 @@ router.delete('/:role_id', RoleController.delete);
  *       500:
  *         description: 服务器错误
  */
-router.post('/:role_id/permissions', RoleController.assignPermissions);
+router.post('/:role_id/permissions', auth, RoleController.assignPermissions);
 
 /**
  * @swagger
@@ -525,7 +526,7 @@ router.post('/:role_id/permissions', RoleController.assignPermissions);
  *       500:
  *         description: 服务器错误
  */
-router.put('/:role_id/permissions', RoleController.updatePermissions);
+router.put('/:role_id/permissions', auth, RoleController.updatePermissions);
 
 /**
  * @swagger
@@ -569,6 +570,6 @@ router.put('/:role_id/permissions', RoleController.updatePermissions);
  *       500:
  *         description: 服务器错误
  */
-router.post('/check-permission', RoleController.checkUserPermission);
+router.post('/check-permission', auth, RoleController.checkUserPermission);
 
 module.exports = router; 

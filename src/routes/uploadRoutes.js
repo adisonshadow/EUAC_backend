@@ -4,6 +4,7 @@ const _path = require('path');
 const fs = require('fs');
 const _config = require('../config');
 const UploadController = require('../controllers/uploadController');
+const auth = require('../middlewares/auth');
 
 const router = new Router({
   prefix: '/api/v1/uploads'
@@ -145,7 +146,7 @@ const handleUploadError = async (ctx, next) => {
  *       500:
  *         description: 服务器错误
  */
-router.post('/', handleUploadError, uploadMiddleware, UploadController.uploadSingle);
+router.post('/', auth, handleUploadError, uploadMiddleware, UploadController.uploadSingle);
 
 /**
  * @swagger
@@ -205,7 +206,7 @@ router.post('/', handleUploadError, uploadMiddleware, UploadController.uploadSin
  *       500:
  *         description: 服务器错误
  */
-router.post('/multiple', handleUploadError, uploadMiddleware, UploadController.uploadMultiple);
+router.post('/multiple', auth, handleUploadError, uploadMiddleware, UploadController.uploadMultiple);
 
 /**
  * @swagger
@@ -290,7 +291,7 @@ router.post('/multiple', handleUploadError, uploadMiddleware, UploadController.u
  *       500:
  *         description: 服务器错误
  */
-router.post('/image', 
+router.post('/image', auth, 
   async (ctx, next) => {
     console.log('Route middleware - Before upload:', {
       headers: ctx.request.headers,
@@ -361,7 +362,7 @@ router.post('/image',
  *       500:
  *         description: 服务器错误
  */
-router.get('/images/:file_id', UploadController.getImage);
+router.get('/images/:file_id', auth, UploadController.getImage);
 
 /**
  * @swagger
@@ -468,7 +469,7 @@ router.get('/images/:file_id', UploadController.getImage);
  *                   type: null
  *                   example: null
  */
-router.get('/:file_id', UploadController.getFile);
+router.get('/:file_id', auth, UploadController.getFile);
 
 /**
  * @swagger
@@ -553,6 +554,6 @@ router.get('/:file_id', UploadController.getFile);
  *                   type: null
  *                   example: null
  */
-router.delete('/:file_id', UploadController.deleteFile);
+router.delete('/:file_id', auth, UploadController.deleteFile);
 
 module.exports = router; 
