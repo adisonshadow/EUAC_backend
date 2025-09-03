@@ -1,11 +1,11 @@
 {
   "name": "uac-api",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "UAC REST API Service",
   "main": "src/app.js",
   "scripts": {
-    "start": "NODE_ENV=development node src/app.js",
-    "dev": "NODE_ENV=development nodemon src/app.js",
+    "dev": "NODE_ENV=development node src/app.js",
+    "dev:watch": "NODE_ENV=development nodemon src/app.js",
     "test": "jest",
     "lint": "eslint src/",
     "test-with-reset-db": "cross-env RESET_DB=true jest --config=jest.config.js",

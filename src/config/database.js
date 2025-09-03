@@ -27,10 +27,10 @@ const sequelize = new Sequelize(
 // 测试数据库连接
 sequelize.authenticate()
   .then(() => {
-    console.log('数据库连接成功');
+    console.log('✅ Successfully connected to database');
   })
   .catch(err => {
-    console.error('数据库连接失败:', err);
+    console.error('❌ Failed to connect to database:', err);
   });
 
 module.exports = sequelize; 

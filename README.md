@@ -1,69 +1,73 @@
-## UAC Backend
+## EUAC Backend (v 1.0)
 
-### 关于 UAC( User Authorization Control )
+### About EUAC (Enterprise User Authorization Control)
 
-UAC 由 ( IAM + EMM + SSO ) 组成
+EUAC consists of (IAM + EMM + SSO) components:
 
-IAM 系统是 Identity and Access Management（身份识别与访问管理），系统用于管理数字身份、控制用户对资源访问权限的技术框架，核心目标是确保合适的用户在合适的时间，以合适的权限访问合适的资源，同时保障系统和数据的安全性。
+**IAM System** - Identity and Access Management system is a technical framework for managing digital identities and controlling user access to resources. Its core objective is to ensure that the right users access the right resources with appropriate permissions at the right time, while maintaining system and data security.
 
-EMM 系统是 （企业Media管理），系统用于管理企业的图片、文档、视频等数字化生产资料。
+**EMM System** - Enterprise Media Management system is designed to manage enterprise digital assets including images, documents, videos, and other digital production materials.
 
-SSO服务(Single Sign-On 单点登录)，允许用户使用单个账号密码访问多个相关但独立的系统。当用户登录一个应用后，就可以访问所有信任该身份认证的应用系统，无需重复登录。简化了身份管理，增强了安全性。UAC系统提供完整的SSO解决方案，支持多种SSO协议(如SAML、OAuth2.0等)，并提供统一的用户认证、授权和会话管理。
+**SSO Service** - Single Sign-On service allows users to access multiple related but independent systems using a single account and password. Once a user logs into one application, they can access all applications that trust this identity authentication without repeated logins. This simplifies identity management and enhances security. The EUAC system provides a complete SSO solution, supporting multiple SSO protocols (such as SAML, OAuth 2.0, etc.) and offering unified user authentication, authorization, and session management.
 
 ---
 
-### 引用链接
-   本项目引用参考的[链接](./Documents/引用链接.md)
+### Reference Links
+This project references the following [links](./Documents/引用链接.md)
 
-## 安装
-1. 修改配置文件 ./config.json
-   配置内容包括：数据库、API 配置、文件上传配置和日志配置。
-   详细的配置说明请参考 [配置文件说明](./Documents/config.json.md)
+## Installation
 
-2. 安装数据库
+1. **Configure the application**
+   Modify the configuration file `./config.json`
+   Configuration includes: database settings, API configuration, file upload settings, and logging configuration.
+   For detailed configuration instructions, please refer to [Configuration File Documentation](./Documents/config.json.md)
+
+2. **Install and setup database**
+   This project uses PostgreSQL for development. Other databases have not been tested yet.
+
 ```bash
 npm run init-db
-# 在安装结束后，会初始化一个超级管理员 admin，验证
-# 请在初始化结束后删除超级管理员
+# After installation, a super administrator 'admin' will be initialized
+# Please delete the super administrator after initialization
 
-# 开发测试：初始化数据结构及模拟数据，注意这一步会清空已有数据
+# Development testing: Initialize database structure and mock data
+# Note: This will clear existing data
 npm run init-db-with-mock
 ```
 
-### 启动后调试
+### Post-Startup Debugging
 
 ```bash
-# 检查API服务健康状态
+# Check API service health status
 curl -s http://localhost:3000/api/v1/health
-
 ```
 
-### API文档
-- Web API 文档  
-http://localhost:3000/swagger
+### API Documentation
+- **Web API Documentation**  
+  http://localhost:3000/swagger
 
-- Open API 地址  
-http://localhost:3000/swagger.json | [swagger.json 代码](./swagger.json)
+- **OpenAPI Specification**  
+  http://localhost:3000/swagger.json | [swagger.json source](./swagger.json)
 
-### 日志使用说明
-本项目配置并使用日志系统，[详细说明](./Documents/日志使用说明.md)
+### Logging System Documentation
+This project is configured with a comprehensive logging system. [Detailed documentation](./Documents/日志使用说明.md)
 
+### Database Table Maintenance Operations
+Database table maintenance operations include VACUUM, ANALYZE, and REINDEX operations. These are used to clean up dead tuples, update statistics, and rebuild indexes to ensure optimal database performance.
 
-### 数据库表维护操作
-数据库表维护操作包括 VACUUM、ANALYZE 和 REINDEX，用于清理死元组、更新统计信息以及重建索引，确保数据库性能。  
-可通过以下命令执行维护操作：
+Execute maintenance operations using the following commands:
 
 ```bash
-# 执行所有维护操作（VACUUM、ANALYZE、REINDEX）
+# Execute all maintenance operations (VACUUM, ANALYZE, REINDEX)
 yarn db:maintenance:all
 
-# 单独执行 VACUUM 操作
+# Execute VACUUM operation only
 yarn db:vacuum
 
-# 单独执行 ANALYZE 操作
+# Execute ANALYZE operation only
 yarn db:analyze
 
-# 单独执行 REINDEX 操作
+# Execute REINDEX operation only
 yarn db:reindex
 ```
 

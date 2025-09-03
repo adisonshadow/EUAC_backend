@@ -48,9 +48,9 @@ const options = {
 let swaggerSpec;
 try {
   swaggerSpec = swaggerJSDoc(options);
-  logger.info('Swagger 文档生成成功');
+  logger.info('✅ Successfully generated Swagger document');
 } catch (error) {
-  logger.error('Swagger 文档生成失败', { error: error.message });
+  logger.error('❌ Failed to generate Swagger document', { error: error.message });
   process.exit(1);
 }
 
@@ -74,9 +74,9 @@ try {
       },
     }),
   );
-  logger.info('Swagger UI 配置成功');
+  logger.info('✅ Successfully configured Swagger UI');
 } catch (error) {
-  logger.error('Swagger UI 配置失败', { error: error.message });
+  logger.error('❌ Failed to configure Swagger UI', { error: error.message });
   process.exit(1);
 }
 
@@ -132,8 +132,11 @@ if (process.env.NODE_ENV !== 'test') {
   const PORT = config.api.port || 3000;
   try {
     server = app.listen(PORT, () => {
-      logger.info('Server is running', { port: PORT });
-      console.log(`Server is running on port ${PORT}`);
+      logger.info(`🚀 ✅✅✅✅ API Server started on port ${PORT}`);
+      logger.info(`📊 Environment: ${process.env.NODE_ENV}`);
+      logger.info(`🔗 Health check: http://localhost:${PORT}/api/v1/health`);
+      logger.info(`📚 Swagger UI: http://localhost:${PORT}/swagger`);
+      logger.info(`📄 Swagger JSON: http://localhost:${PORT}/swagger.json`);
     });
   } catch (error) {
     logger.error('服务器启动失败', {
@@ -148,11 +151,11 @@ if (process.env.NODE_ENV !== 'test') {
   try {
     server = app.listen(PORT);
     if (!server) {
-      logger.error('服务器启动失败');
+      logger.error('❌ Failed to start server');
       process.exit(1);
     }
   } catch (error) {
-    logger.error('测试服务器启动失败', {
+    logger.error('❌ Failed to start server', {
       error: error.message,
       stack: error.stack
     });
@@ -162,7 +165,7 @@ if (process.env.NODE_ENV !== 'test') {
 
 // 添加错误处理
 server.on('error', (error) => {
-  logger.error('服务器错误', {
+  logger.error('❌ Server error', {
     name: error.name,
     message: error.message,
     stack: error.stack
@@ -172,7 +175,7 @@ server.on('error', (error) => {
 
 // 添加未捕获的异常处理
 process.on('uncaughtException', (error) => {
-  logger.error('未捕获的异常', {
+  logger.error('❌ Uncaught exception', {
     name: error.name,
     message: error.message,
     stack: error.stack
@@ -182,7 +185,7 @@ process.on('uncaughtException', (error) => {
 
 // 添加未处理的 Promise 拒绝处理
 process.on('unhandledRejection', (reason, promise) => {
-  logger.error('未处理的 Promise 拒绝', {
+  logger.error('❌ Unhandled promise rejection', {
     reason: reason,
     promise: promise
   });

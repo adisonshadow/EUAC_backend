@@ -5,3 +5,5 @@ yarn-error.log
 src/resource/
 uploads/*
 thumbsCache/*
+coverage/
+test/
