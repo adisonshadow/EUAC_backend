@@ -535,15 +535,18 @@ class ApplicationController {
       }
 
       // 生成当前时间戳
-      const currentTimestample = Date.now().toString();
+      const currentTimestamp = Date.now().toString();
       
       // 使用bcrypt加密时间戳
       const bcrypt = require("bcryptjs");
-      const secret = await bcrypt.hash(currentTimestample, 10);
+      // const secret = await bcrypt.hash(currentTimestamp, 10);
+
+      // 使用SSO配置中的salt和当前时间戳生成secret
+      const secret = await bcrypt.hash(currentTimestamp + application.sso_config.salt, 10);
 
       // 构建SSO配置信息
       const ssoConfig = {
-        currentTimestample,
+        currentTimestamp,
         secret,
         protocol: application.sso_config.protocol || "OAuth",
         redirect_uri: application.sso_config.redirect_uri

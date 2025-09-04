@@ -40,7 +40,7 @@ const router = new Router();
  *           type: string
  *           description: 基于currenttime、salt，使用 bcrypt 生成的Hash值
  *           example: "$2a$10$xxxxx"
- *         currentTimestample:
+ *         currentTimestamp:
  *           type: integer
  *           description: 当前时间戳， 用于生成secret
  *           example: 17198592000

@@ -63,7 +63,7 @@ const router = new Router({
  *                     sso_config:
  *                       type: object
  *                       properties:
- *                         currentTimestample:
+ *                         currentTimestamp:
  *                           type: string
  *                           description: 当前时间戳
  *                           example: "1703123456789"
